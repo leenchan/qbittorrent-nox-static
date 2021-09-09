@@ -19,7 +19,7 @@ jobs:
         libtorrent_version: ["1.2", "2.0"]
         icu_step_name: [icu skipped, icu]
         build_tool: ["", cmake]
-        qbittorrent_tag: ["-qt release-4.3.5"]
+        qbittorrent_tag: ["-qt release-4.1.9.1"]
         include:
           - build_tool: "cmake"
             build_tool_name: "cmake-"
@@ -29,7 +29,7 @@ jobs:
             preview_release: true
 
           - libtorrent_version: "1.2"
-            libtorrent_tag: -lt v1.2.13
+            libtorrent_tag: -lt v1.1.14
             preview_release: false
 
           - icu_step_name: icu
