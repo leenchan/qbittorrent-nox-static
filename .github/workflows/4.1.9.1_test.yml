@@ -14,7 +14,7 @@ jobs:
       matrix:
         arch_type: [aarch64]
         libtorrent_version: ["1.2"]
-        with_icu: ["", -i]
+        with_icu: [""]
         build_tool: ["", cmake]
         libtorrent_patch: [""]
         qbittorrent_patch: [""]
@@ -61,7 +61,7 @@ jobs:
 
       - run: bash qbittorrent-nox-static.sh boost
 
-      - run: bash qbittorrent-nox-static.sh -lt v1.1.14 libtorrent
+      - run: bash qbittorrent-nox-static.sh -lt libtorrent-1_1_14 libtorrent
 
       - run: bash qbittorrent-nox-static.sh ${{ matrix.with_icu }} qtbase
 
