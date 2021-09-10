@@ -1111,6 +1111,16 @@ while (("${#}")); do
 			test_git_ouput "${qbittorrent_github_tag}" "master" "qbittorrent"
 			shift
 			;;
+		-bm | --boost-master)
+			boost_github_tag="$(git "${boost_github_url}" -t "master")"
+			test_git_ouput "${boost_github_tag}" "master" "boost"
+			shift
+			;;
+		-bt | --boost-tag)
+			boost_github_tag="$(git "${boost_github_url}" -t "boost-$2")"
+			test_git_ouput "${boost_github_tag}" "boost-$2" "boost"
+			shift 2
+			;;
 		-lm | --libtorrent-master)
 			libtorrent_github_tag="$(git "${libtorrent_github_url}" -t "RC_${libtorrent_version//./_}")"
 			test_git_ouput "${libtorrent_github_tag}" "RC_${libtorrent_version//./_}" "libtorrent"
@@ -1707,15 +1717,15 @@ if [[ "${!app_name_skip:-yes}" = 'no' ]] || [[ "${1}" = "${app_name}" ]]; then
 	#
 	[[ -d "${qbt_install_dir}/boost" ]] && delete_function "${app_name}"
 	#
-	if [[ "${boost_url_status}" =~ (200) ]]; then
-		download_file "${app_name}" "${boost_url}"
-		mv -f "${qbt_install_dir}/boost_${boost_version//./_}/" "${qbt_install_dir}/boost"
-		_cd "${qbt_install_dir}/boost"
-	fi
+	# if [[ "${boost_url_status}" =~ (200) ]]; then
+	# 	download_file "${app_name}" "${boost_url}"
+	# 	mv -f "${qbt_install_dir}/boost_${boost_version//./_}/" "${qbt_install_dir}/boost"
+	# 	_cd "${qbt_install_dir}/boost"
+	# fi
 	#
-	if [[ "${boost_url_status}" =~ (403|404) ]]; then
-		download_folder "${app_name}" "${!app_github_url}"
-	fi
+	# if [[ "${boost_url_status}" =~ (403|404) ]]; then
+	download_folder "${app_name}" "${!app_github_url}"
+	# fi
 	#
 	if [[ "${qbt_build_tool}" != 'cmake' ]]; then
 		"${qbt_install_dir}/boost/bootstrap.sh" |& tee "${qbt_install_dir}/logs/${app_name}.log.txt"
@@ -1723,9 +1733,9 @@ if [[ "${!app_name_skip:-yes}" = 'no' ]] || [[ "${1}" = "${app_name}" ]]; then
 		echo -e " ${uyc} Skipping b2 as we are using cmake"
 	fi
 	#
-	if [[ "${boost_url_status}" =~ (403|404) ]]; then
-		"${qbt_install_dir}/boost/b2" headers |& tee "${qbt_install_dir}/logs/${app_name}.log.txt"
-	fi
+	# if [[ "${boost_url_status}" =~ (403|404) ]]; then
+	# 	"${qbt_install_dir}/boost/b2" headers |& tee "${qbt_install_dir}/logs/${app_name}.log.txt"
+	# fi
 else
 	application_skip
 fi
