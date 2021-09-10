@@ -488,8 +488,6 @@ set_module_urls() {
 	boost_github_url="https://github.com/boostorg/boost.git"
 	boost_version="$(git_git ls-remote -q -t --refs ${boost_github_url} | awk '{sub("refs/tags/boost-", "");sub("(.*)(rc|alpha|beta)(.*)", ""); print $2 }' | awk '!/^$/' | sort -rV | head -n1)"
 	boost_github_tag="boost-${boost_version}"
-	boost_url="https://boostorg.jfrog.io/artifactory/main/release/${boost_version}/source/boost_${boost_version//./_}.tar.gz"
-	boost_url_status="$(curl_curl -so /dev/null --head --write-out '%{http_code}' "https://boostorg.jfrog.io/artifactory/main/release/${boost_version}/source/boost_${boost_version//./_}.tar.gz")"
 	#
 	qt_github_tag_list="$(git_git ls-remote -q -t --refs https://github.com/qt/qtbase.git | awk '{sub("refs/tags/", "");sub("(.*)(-[^0-9].*)(.*)", ""); print $2 }' | awk '!/^$/' | sort -rV)"
 	#
@@ -1111,14 +1109,9 @@ while (("${#}")); do
 			test_git_ouput "${qbittorrent_github_tag}" "master" "qbittorrent"
 			shift
 			;;
-		-bm | --boost-master)
-			boost_github_tag="$(git "${boost_github_url}" -t "master")"
-			test_git_ouput "${boost_github_tag}" "master" "boost"
-			shift
-			;;
 		-bt | --boost-tag)
-			boost_github_tag="$(git "${boost_github_url}" -t "boost-$2")"
-			test_git_ouput "${boost_github_tag}" "boost-$2" "boost"
+			boost_version="$(echo "$2" | grep -Eo '[0-9.]+')"
+			boost_github_tag="boost-${boost_version}"
 			shift 2
 			;;
 		-lm | --libtorrent-master)
@@ -1717,15 +1710,17 @@ if [[ "${!app_name_skip:-yes}" = 'no' ]] || [[ "${1}" = "${app_name}" ]]; then
 	#
 	[[ -d "${qbt_install_dir}/boost" ]] && delete_function "${app_name}"
 	#
-	# if [[ "${boost_url_status}" =~ (200) ]]; then
-	# 	download_file "${app_name}" "${boost_url}"
-	# 	mv -f "${qbt_install_dir}/boost_${boost_version//./_}/" "${qbt_install_dir}/boost"
-	# 	_cd "${qbt_install_dir}/boost"
-	# fi
-	#
-	# if [[ "${boost_url_status}" =~ (403|404) ]]; then
-	download_folder "${app_name}" "${!app_github_url}"
-	# fi
+	boost_url="https://boostorg.jfrog.io/artifactory/main/release/${boost_version}/source/boost_${boost_version//./_}.tar.gz"
+	boost_url_status="$(curl_curl -so /dev/null --head --write-out '%{http_code}' "https://boostorg.jfrog.io/artifactory/main/release/${boost_version}/source/boost_${boost_version//./_}.tar.gz")"
+	if [[ "${boost_url_status}" =~ (200) ]]; then
+		download_file "${app_name}" "${boost_url}"
+		mv -f "${qbt_install_dir}/boost_${boost_version//./_}/" "${qbt_install_dir}/boost"
+		_cd "${qbt_install_dir}/boost"
+	fi
+
+	if [[ "${boost_url_status}" =~ (403|404) ]]; then
+		download_folder "${app_name}" "${!app_github_url}"
+	fi
 	#
 	if [[ "${qbt_build_tool}" != 'cmake' ]]; then
 		"${qbt_install_dir}/boost/bootstrap.sh" |& tee "${qbt_install_dir}/logs/${app_name}.log.txt"
@@ -1733,9 +1728,9 @@ if [[ "${!app_name_skip:-yes}" = 'no' ]] || [[ "${1}" = "${app_name}" ]]; then
 		echo -e " ${uyc} Skipping b2 as we are using cmake"
 	fi
 	#
-	# if [[ "${boost_url_status}" =~ (403|404) ]]; then
-	# 	"${qbt_install_dir}/boost/b2" headers |& tee "${qbt_install_dir}/logs/${app_name}.log.txt"
-	# fi
+	if [[ "${boost_url_status}" =~ (403|404) ]]; then
+		"${qbt_install_dir}/boost/b2" headers |& tee "${qbt_install_dir}/logs/${app_name}.log.txt"
+	fi
 else
 	application_skip
 fi
