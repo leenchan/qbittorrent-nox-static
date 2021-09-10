@@ -29,7 +29,7 @@ jobs:
             preview_release: true
 
           - libtorrent_version: "1.2"
-            libtorrent_tag: -lt v1.1.14
+            libtorrent_tag: -lt libtorrent-1_1_14
             preview_release: false
 
           - icu_step_name: icu
