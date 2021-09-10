@@ -60,7 +60,7 @@ jobs:
 
       - run: "${{ matrix.with_icu_command }}"
 
-      - run: bash qbittorrent-nox-static.sh boost
+      - run: bash qbittorrent-nox-static.sh -bt 1.68.0 boost
 
       - run: bash qbittorrent-nox-static.sh -lt libtorrent-1_1_14 libtorrent
 
