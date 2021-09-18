@@ -1847,7 +1847,7 @@ if [[ "${!app_name_skip:-yes}" = 'no' ]] || [[ "${1}" = "${app_name}" ]]; then
 			sed "s|aarch64-linux-gnu|${qbt_cross_host}|g" -i "${qbt_install_dir}/qtbase/mkspecs/${qbt_cross_qtbase}/qmake.conf"
 			;;
 		mips)
-			cp -rf "${qbt_install_dir}/qtbase/mkspecs/linux-arm-gnueabi-g++/qmake.conf" "${qbt_install_dir}/qtbase/mkspecs/${qbt_cross_qtbase}/qmake.conf"
+			cp -rf "${qbt_install_dir}/qtbase/mkspecs/linux-arm-gnueabi-g++" "${qbt_install_dir}/qtbase/mkspecs/${qbt_cross_qtbase}"
 			sed "s|arm-linux-gnueabi|${qbt_cross_host}|g" -i "${qbt_install_dir}/qtbase/mkspecs/${qbt_cross_qtbase}/qmake.conf"
 			;;
 	esac
