@@ -100,8 +100,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Archive code coverage results
-        if: env.qbt_build_tool == 'cmake'
         uses: actions/upload-artifact@v2.2.4
         with:
-          name: ${{ env.name }}-graphs
-          path: ${{ env.build_dir }}/completed/*.png
+          name: ${{ matrix.arch_type }}-${{ matrix.build_tool_name }}${{ matrix.with_icu_name }}lt-v${{ matrix.libtorrent_version }}-qbittorrent-nox
+          path: ${{ env.build_dir }}/completed/qbittorrent-nox
