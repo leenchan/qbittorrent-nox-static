@@ -84,21 +84,6 @@ jobs:
       - name: qbittorrent
         run: bash qbittorrent-nox-static.sh ${{ matrix.qbittorrent_tag }} qbittorrent
 
-      - name: "Set release asset name"
-        run: mv -f "${{ env.build_dir }}/completed/qbittorrent-nox" "${{ env.build_dir }}/completed/${{ matrix.arch_type }}-${{ matrix.build_tool_name }}${{ matrix.icu_matrix_name }}qbittorrent-nox"
-
-      - name: "Create release - tag - assets"
-        uses: ncipollo/release-action@v1
-        with:
-          prerelease: ${{ matrix.preview_release }}
-          artifacts: "${{ env.build_dir }}/completed/${{ matrix.arch_type }}-${{ matrix.build_tool_name }}${{ matrix.icu_matrix_name }}qbittorrent-nox"
-          replacesArtifacts: true
-          tag: "${{ env.release_tag }}"
-          name: "${{ env.release_title }}"
-          bodyFile: "${{ env.build_dir }}/release_info/release.md"
-          allowUpdates: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2.2.4
         with:
