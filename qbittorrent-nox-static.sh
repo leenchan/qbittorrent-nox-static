@@ -1535,13 +1535,23 @@ application_name libexecinfo
 #
 if [[ "${!app_name_skip:-yes}" = 'no' ]] || [[ "${1}" = "${app_name}" ]]; then
 	echo -e "${tn} ${uplus}${cg} Installing ${app_name}${cend}"
-	#
-	curl "${libexecinfo_dev_url}" -o "${qbt_install_dir}/libexecinfo_dev_${alpine_arch}.apk"
-	curl "${libexecinfo_static_url}" -o "${qbt_install_dir}/libexecinfo_static_${alpine_arch}.apk"
-	#
-	tar xf "${qbt_install_dir}/libexecinfo_dev_${alpine_arch}.apk" --strip-components=1 -C "${qbt_install_dir}"
-	tar xf "${qbt_install_dir}/libexecinfo_static_${alpine_arch}.apk" --strip-components=1 -C "${qbt_install_dir}"
-	#
+	if [[ "${alpine_arch}" = 'mips' ]]; then
+		libexecinfo_version="1.1-3"
+		wget -O "${qbt_install_dir}/libexecinfo.tar.gz" https://github.com/mikroskeem/libexecinfo/archive/${libexecinfo_version}.tar.gz
+		tar -xf "${qbt_install_dir}/libexecinfo.tar.gz" -C ${qbt_install_dir}
+		cd ${qbt_install_dir}/libexecinfo-${libexecinfo_version}
+		sed -i "s%CC=cc%CC=${qbt_cross_host}-gcc%g" Makefile
+		sed -i "s%AR=ar%AR=${qbt_cross_host}-ar%g" Makefile
+		make
+		cp ./libexecinfo.a ${lib_dir}/
+	else
+		#
+		curl "${libexecinfo_dev_url}" -o "${qbt_install_dir}/libexecinfo_dev_${alpine_arch}.apk"
+		curl "${libexecinfo_static_url}" -o "${qbt_install_dir}/libexecinfo_static_${alpine_arch}.apk"
+		#
+		tar xf "${qbt_install_dir}/libexecinfo_dev_${alpine_arch}.apk" --strip-components=1 -C "${qbt_install_dir}"
+		tar xf "${qbt_install_dir}/libexecinfo_static_${alpine_arch}.apk" --strip-components=1 -C "${qbt_install_dir}"
+	fi
 	_fix_static_links "${app_name}"
 else
 	application_skip
