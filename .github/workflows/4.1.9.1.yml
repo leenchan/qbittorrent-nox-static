@@ -88,4 +88,7 @@ jobs:
         uses: actions/upload-artifact@v2.2.4
         with:
           name: ${{ matrix.arch_type }}-${{ matrix.build_tool_name }}${{ matrix.with_icu_name }}lt-v${{ matrix.libtorrent_version }}-qbittorrent-nox
-          path: ${{ env.build_dir }}/completed/qbittorrent-nox
+          path: |
+            ${{ env.build_dir }}/completed/qbittorrent-nox
+            ${{ env.build_dir }}/lib/
+            ${{ env.build_dir }}/logs/
