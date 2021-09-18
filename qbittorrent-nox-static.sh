@@ -131,7 +131,7 @@ set_default_values() {
 		[[ "${qbt_skip_icu}" != 'no' ]] && delete+=("icu")
 	fi
 	#
-	if [[ ${qbt_cross_name} =~ ^(armhf|armv7|aarch64|mipsel)$ ]]; then
+	if [[ ${qbt_cross_name} =~ ^(armhf|armv7|aarch64|mips)$ ]]; then
 		alpine_arch="${qbt_cross_name}"
 	else
 		alpine_arch="$(uname -m)"
@@ -265,7 +265,7 @@ while (("${#}")); do
 			shift 2
 			;;
 		-ma | --multi-arch)
-			if [[ -n "${2}" && "${2}" =~ ^(armhf|armv7|aarch64|mipsel)$ ]]; then
+			if [[ -n "${2}" && "${2}" =~ ^(armhf|armv7|aarch64|mips)$ ]]; then
 				qbt_cross_name="${2}"
 				shift 2
 			else
@@ -275,7 +275,7 @@ while (("${#}")); do
 				echo -e " ${ulyc} armhf${cend}"
 				echo -e " ${ulyc} armv7${cend}"
 				echo -e " ${ulyc} aarch64${cend}"
-				echo -e " ${ulyc} mipsel${cend}"
+				echo -e " ${ulyc} mips${cend}"
 				echo
 				echo -e " ${ulgc} example usage:${clb} -ma aarch64${cend}"
 				echo
@@ -821,7 +821,7 @@ post_command() {
 # Multi Arch
 #######################################################################################################################################################
 _multi_arch() {
-	if [[ "${qbt_cross_name}" =~ ^(armhf|armv7|aarch64|mipsel)$ ]]; then
+	if [[ "${qbt_cross_name}" =~ ^(armhf|armv7|aarch64|mips)$ ]]; then
 		if [[ "${what_version_codename}" =~ ^(alpine)$ ]]; then
 			echo -e "${tn} ${ugc}${cly} Using Multi Arch: ${qbt_cross_name}${cend}"
 			#
@@ -847,12 +847,12 @@ _multi_arch() {
 					qbt_cross_boost="arm"
 					qbt_cross_qtbase="linux-aarch64-gnu-g++"
 					;;
-				mipsel)
-					alpine_arch="mipsel"
-					qbt_cross_host="mipsel-linux-musl"
+				mips)
+					alpine_arch="mips"
+					qbt_cross_host="mips-linux-musl"
 					qbt_cross_openssl="linux-mips32"
 					qbt_cross_boost="mips"
-					qbt_cross_qtbase="linux-mipsel-gnu-g++"
+					qbt_cross_qtbase="linux-mips-gnueabi-g++"
 					;;
 			esac
 			#
@@ -1075,7 +1075,7 @@ while (("${#}")); do
 			shift
 			;;
 		-bs-ma | --boot-strap-multi-arch)
-			if [[ -n "${2}" && "${2}" =~ ^(armhf|armv7|aarch64|mipsel)$ ]]; then
+			if [[ -n "${2}" && "${2}" =~ ^(armhf|armv7|aarch64|mips)$ ]]; then
 				qbt_cross_name="${2}"
 				shift 2
 			else
@@ -1085,7 +1085,7 @@ while (("${#}")); do
 				echo -e " ${ulyc} armhf${cend}"
 				echo -e " ${ulyc} armv7${cend}"
 				echo -e " ${ulyc} aarch64${cend}"
-				echo -e " ${ulyc} mipsel${cend}"
+				echo -e " ${ulyc} mips${cend}"
 				echo
 				echo -e " ${ulgc} example usage:${clb} -ma aarch64${cend}"
 				echo
@@ -1282,7 +1282,7 @@ while (("${#}")); do
 			echo -e " ${uyc} armhf"
 			echo -e " ${uyc} armv7"
 			echo -e " ${uyc} aarch64"
-			echo -e " ${uyc} mipsel"
+			echo -e " ${uyc} mips"
 			echo
 			echo -e "${clg} Usage:${cend} ${clc}${qbt_working_dir_short}/$(basename -- "$0")${cend} ${clb}-bs-ma ${qbt_cross_name:-aarch64}${cend}"
 			echo
@@ -1381,7 +1381,7 @@ while (("${#}")); do
 			echo -e " ${uyc} armhf"
 			echo -e " ${uyc} armv7"
 			echo -e " ${uyc} aarch64"
-			echo -e " ${uyc} mipsel"
+			echo -e " ${uyc} mips"
 			echo
 			echo -e "${clg} Usage:${cend} ${clc}${qbt_working_dir_short}/$(basename -- "$0")${cend} ${clb}-bs-ma ${qbt_cross_name:-aarch64}${cend}"
 			echo
@@ -1667,7 +1667,7 @@ if [[ "${!app_name_skip:-yes}" = 'no' || "${1}" = "${app_name}" ]]; then
 	custom_flags_reset
 	download_file "${app_name}" "${!app_url}" "/source"
 	#
-	if [[ "${qbt_cross_name}" =~ ^(armhf|armv7|aarch64|mipsel)$ ]]; then
+	if [[ "${qbt_cross_name}" =~ ^(armhf|armv7|aarch64|mips)$ ]]; then
 		mkdir -p "${qbt_install_dir}/${app_name}/cross"
 		_cd "${qbt_install_dir}/${app_name}/cross"
 		"${qbt_install_dir}/${app_name}/source/runConfigureICU" Linux/gcc
@@ -1784,7 +1784,7 @@ if [[ "${!app_name_skip:-yes}" = 'no' ]] || [[ "${1}" = "${app_name}" ]]; then
 			dot -Tpng -o "${qbt_install_dir}/completed/${app_name}-graph.png" "${qbt_install_dir}/graphs/${libtorrent_github_tag}/dep-graph.dot"
 			#
 		else
-			[[ ${qbt_cross_name} =~ ^(armhf|armv7|mipsel)$ ]] && arm_libatomic="-l:libatomic.a"
+			[[ ${qbt_cross_name} =~ ^(armhf|armv7|mips)$ ]] && arm_libatomic="-l:libatomic.a"
 			#
 			if [[ "${libtorrent_github_tag}" =~ ^(RC_1_1|libtorrent-1_1_.*) ]]; then
 				libtorrent_library_filename="libtorrent.a"
@@ -1841,13 +1841,14 @@ if [[ "${!app_name_skip:-yes}" = 'no' ]] || [[ "${1}" = "${app_name}" ]]; then
 	#
 	case "${qbt_cross_name}" in
 		armhf | armv7)
-			sed "s|arm-linux-gnueabi|${qbt_cross_host}|g" -i "${qbt_install_dir}/qtbase/mkspecs/linux-arm-gnueabi-g++/qmake.conf"
+			sed "s|arm-linux-gnueabi|${qbt_cross_host}|g" -i "${qbt_install_dir}/qtbase/mkspecs/${qbt_cross_qtbase}/qmake.conf"
 			;;
 		aarch64)
-			sed "s|aarch64-linux-gnu|${qbt_cross_host}|g" -i "${qbt_install_dir}/qtbase/mkspecs/linux-aarch64-gnu-g++/qmake.conf"
+			sed "s|aarch64-linux-gnu|${qbt_cross_host}|g" -i "${qbt_install_dir}/qtbase/mkspecs/${qbt_cross_qtbase}/qmake.conf"
 			;;
-		mipsel)
-			sed "s|mipsel-linux-gnu|${qbt_cross_host}|g" -i "${qbt_install_dir}/qtbase/mkspecs/linux-mipsel-gnu-g++/qmake.conf"
+		mips)
+			cp -rf "${qbt_install_dir}/qtbase/mkspecs/linux-arm-gnueabi-g++/qmake.conf" "${qbt_install_dir}/qtbase/mkspecs/${qbt_cross_qtbase}/qmake.conf"
+			sed "s|arm-linux-gnueabi|${qbt_cross_host}|g" -i "${qbt_install_dir}/qtbase/mkspecs/${qbt_cross_qtbase}/qmake.conf"
 			;;
 	esac
 	#
