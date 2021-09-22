@@ -1537,7 +1537,7 @@ if [[ "${!app_name_skip:-yes}" = 'no' ]] || [[ "${1}" = "${app_name}" ]]; then
 	echo -e "${tn} ${uplus}${cg} Installing ${app_name}${cend}"
 	if [[ "${alpine_arch}" = 'mips' ]]; then
 		libexecinfo_version="1.1-3"
-		wget -O "${qbt_install_dir}/libexecinfo.tar.gz" https://github.com/mikroskeem/libexecinfo/archive/${libexecinfo_version}.tar.gz
+		curl -skL https://github.com/mikroskeem/libexecinfo/archive/${libexecinfo_version}.tar.gz > "${qbt_install_dir}/libexecinfo.tar.gz"
 		tar -xf "${qbt_install_dir}/libexecinfo.tar.gz" -C ${qbt_install_dir}
 		cd ${qbt_install_dir}/libexecinfo-${libexecinfo_version}
 		sed -i "s%CC=cc%CC=${qbt_cross_host}-gcc%g" Makefile
