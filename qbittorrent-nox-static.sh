@@ -1543,6 +1543,9 @@ if [[ "${!app_name_skip:-yes}" = 'no' ]] || [[ "${1}" = "${app_name}" ]]; then
 		sed -i "s%CC=cc%CC=${qbt_cross_host}-gcc%g" Makefile
 		sed -i "s%AR=ar%AR=${qbt_cross_host}-ar%g" Makefile
 		make
+		mkdir -p ${include_dir}
+		cp ./execinfo.h ${include_dir}/
+		cp ./stacktraverse.h ${include_dir}/
 		cp ./libexecinfo.a ${lib_dir}/
 		ln -fsn "${lib_dir}/libexecinfo.a" "${lib_dir}/libexecinfo.so"
 		# cp ./libexecinfo.so.1 ${lib_dir}/
