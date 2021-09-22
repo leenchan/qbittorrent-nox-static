@@ -57,38 +57,45 @@ jobs:
       - name: libexecinfo
         run: bash qbittorrent-nox-static.sh libexecinfo
 
-      - name: zlib
-        run: bash qbittorrent-nox-static.sh zlib
-
-      - name: iconv
-        run: bash qbittorrent-nox-static.sh iconv
-
-      - name: ${{ matrix.icu_step_name }}
-        run: "${{ matrix.with_icu }}"
-
-      - name: openssl
-        run: bash qbittorrent-nox-static.sh openssl
-
-      - name: boost
-        run: bash qbittorrent-nox-static.sh ${{matrix.boost_tag}} boost
-
-      - name: libtorrent
-        run: bash qbittorrent-nox-static.sh ${{ matrix.libtorrent_tag }} libtorrent
-
-      - name: qtbase ${{ matrix.qt_with_icu }}
-        run: bash qbittorrent-nox-static.sh ${{ matrix.qt_with_icu }} qtbase
-
-      - name: qttools
-        run: bash qbittorrent-nox-static.sh qttools
-
-      - name: qbittorrent
-        run: bash qbittorrent-nox-static.sh ${{ matrix.qbittorrent_tag }} qbittorrent
-
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2.2.4
         with:
           name: ${{ matrix.arch_type }}-${{ matrix.build_tool_name }}${{ matrix.with_icu_name }}lt-v${{ matrix.libtorrent_version }}-qbittorrent-nox
           path: |
-            ${{ env.build_dir }}/completed/qbittorrent-nox
-            ${{ env.build_dir }}/lib/
-            ${{ env.build_dir }}/logs/
+            ${{ env.build_dir }}
+
+      # - name: zlib
+      #   run: bash qbittorrent-nox-static.sh zlib
+
+      # - name: iconv
+      #   run: bash qbittorrent-nox-static.sh iconv
+
+      # - name: ${{ matrix.icu_step_name }}
+      #   run: "${{ matrix.with_icu }}"
+
+      # - name: openssl
+      #   run: bash qbittorrent-nox-static.sh openssl
+
+      # - name: boost
+      #   run: bash qbittorrent-nox-static.sh ${{matrix.boost_tag}} boost
+
+      # - name: libtorrent
+      #   run: bash qbittorrent-nox-static.sh ${{ matrix.libtorrent_tag }} libtorrent
+
+      # - name: qtbase ${{ matrix.qt_with_icu }}
+      #   run: bash qbittorrent-nox-static.sh ${{ matrix.qt_with_icu }} qtbase
+
+      # - name: qttools
+      #   run: bash qbittorrent-nox-static.sh qttools
+
+      # - name: qbittorrent
+      #   run: bash qbittorrent-nox-static.sh ${{ matrix.qbittorrent_tag }} qbittorrent
+
+      # - name: Archive code coverage results
+      #   uses: actions/upload-artifact@v2.2.4
+      #   with:
+      #     name: ${{ matrix.arch_type }}-${{ matrix.build_tool_name }}${{ matrix.with_icu_name }}lt-v${{ matrix.libtorrent_version }}-qbittorrent-nox
+      #     path: |
+      #       ${{ env.build_dir }}/completed/qbittorrent-nox
+      #       ${{ env.build_dir }}/lib/
+      #       ${{ env.build_dir }}/logs/
