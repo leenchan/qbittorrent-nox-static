@@ -1544,9 +1544,10 @@ if [[ "${!app_name_skip:-yes}" = 'no' ]] || [[ "${1}" = "${app_name}" ]]; then
 		sed -i "s%AR=ar%AR=${qbt_cross_host}-ar%g" Makefile
 		make
 		cp ./libexecinfo.a ${lib_dir}/
-		cp ./libexecinfo.so.1 ${lib_dir}/
-		cp ./stacktraverse.So ${lib_dir}/
-		cp ./execinfo.So ${lib_dir}/
+		ln -fsn "${lib_dir}/libexecinfo.a" "${lib_dir}/libexecinfo.so"
+		# cp ./libexecinfo.so.1 ${lib_dir}/
+		# cp ./stacktraverse.So ${lib_dir}/
+		# cp ./execinfo.So ${lib_dir}/
 	else
 		#
 		curl "${libexecinfo_dev_url}" -o "${qbt_install_dir}/libexecinfo_dev_${alpine_arch}.apk"
