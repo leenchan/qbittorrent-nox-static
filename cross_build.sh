@@ -18,6 +18,8 @@ export QT_DEVICE="${QT_DEVICE}"
 # match qt version prefix. E.g 5 --> 5.15.2, 5.12 --> 5.12.10
 export QT_VER_PREFIX="5"
 export LIBTORRENT_BRANCH="RC_1_2"
+export QBITTORRENT_VERSION="$QBITTORRENT_VERSION"
+[ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
 export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
 
 apk add gcc \
@@ -65,8 +67,10 @@ mkdir -p "${CROSS_ROOT}" \
 	/usr/src/qtbase \
 	/usr/src/qttools
 
-wget -c -O "${SELF_DIR}/release-4.3.8.10.tar.gz" "https://github.com/c0re100/qBittorrent-Enhanced-Edition/archive/refs/tags/release-4.3.8.10.tar.gz"
-tar -zxf "${SELF_DIR}/release-4.3.8.10.tar.gz" --strip-components=1 -C "${SELF_DIR}"
+# download qbittorrent
+wget -c -O "${SELF_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" "https://github.com/c0re100/qBittorrent-Enhanced-Edition/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
+tar -zxf "${SELF_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" --strip-components=1 -C "${SELF_DIR}"
+[ -f "${SELF_DIR}/src/base/version.h.in" ] || exit 1
 
 # toolchain
 if [ ! -f "${SELF_DIR}/${CROSS_HOST}-cross.tgz" ]; then
