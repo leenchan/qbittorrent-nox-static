@@ -1,4 +1,8 @@
 name: enhanced edition
+
+on:
+  workflow_dispatch:
+
 # on:
 #   push:
 #     branches:
