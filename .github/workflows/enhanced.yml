@@ -85,11 +85,11 @@ jobs:
           QT_DEVICE: "${{ matrix.qt_device }}"
           QT_XPLATFORM: "${{matrix.qt_xplatform}}"
         run: sh cross_build.sh
-      # - uses: actions/upload-artifact@v2
-      #   with:
-      #     name: qbittorrent-nox_${{ matrix.cross_host }}_static
-      #     path: |
-      #       /tmp/qbittorrent-nox*
+      - uses: actions/upload-artifact@v2
+        with:
+          name: qbittorrent-nox_${{ matrix.cross_host }}_static
+          path: |
+            /tmp/qbittorrent-nox*
       # - name: Upload Github Assets
       #   if: startsWith(github.ref, 'refs/tags/')
       #   uses: svenstaro/upload-release-action@v2
