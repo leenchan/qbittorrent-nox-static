@@ -1,7 +1,7 @@
 name: sh-checker
-on:
-  push:
-  pull_request:
+# on:
+#   push:
+#   pull_request:
 jobs:
   sh-checker:
     runs-on: ubuntu-latest
