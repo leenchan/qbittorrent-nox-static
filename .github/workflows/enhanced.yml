@@ -47,7 +47,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        qbittorrent_version: ["4.1.9.17"]
         include:
           # cross toolchain downloads from: https://musl.cc/
           # you need to find the name ${cross_host}-cross.tgz
@@ -85,7 +84,7 @@ jobs:
           OPENSSL_COMPILER: "${{ matrix.openssl_compiler }}"
           QT_DEVICE: "${{ matrix.qt_device }}"
           QT_XPLATFORM: "${{matrix.qt_xplatform}}"
-          QBITTORRENT_VERSION: "${matrix.qbittorrent_version}"
+          QBITTORRENT_VERSION: "4.1.9.17"
         run: sh cross_build.sh
       - uses: actions/upload-artifact@v2
         with:
