@@ -857,7 +857,8 @@ _multi_arch() {
 					;;
 				mipsel)
 					alpine_arch="mipsel"
-					qbt_cross_host="mipsel-linux-musl"
+					# qbt_cross_host="mipsel-linux-musl"
+					qbt_cross_host="mipsel-linux-musln32sf"
 					qbt_cross_openssl="linux-mips32"
 					qbt_cross_boost="mipsel"
 					qbt_cross_qtbase="linux-mipsel-gnueabi-g++"
