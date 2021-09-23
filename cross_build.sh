@@ -17,9 +17,12 @@ export QT_XPLATFORM="${QT_XPLATFORM}"
 export QT_DEVICE="${QT_DEVICE}"
 # match qt version prefix. E.g 5 --> 5.15.2, 5.12 --> 5.12.10
 export QT_VER_PREFIX="5"
-export LIBTORRENT_BRANCH="RC_1_2"
-export QBITTORRENT_VERSION="$QBITTORRENT_VERSION"
+export BOOST_VERSION="${BOOST_VERSION}"
+export LIBTORRENT_VERSION="${LIBTORRENT_VERSION}"
+export QBITTORRENT_VERSION="${QBITTORRENT_VERSION}"
 [ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
+
+https://github.com/arvidn/libtorrent/archive/refs/tags/libtorrent-1_1_14.tar.gz
 export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
 
 apk add gcc \
@@ -116,9 +119,12 @@ make -j$(nproc)
 make install_sw
 
 # boost
+BOOST_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "1.68.0"}}')
+[ -z "$BOOST_VERSION_MAX" ] || BOOST_VERSION="${BOOST_VERSION_MAX}"
 if [ ! -f "${SELF_DIR}/boost.tar.bz2" ]; then
-	boost_latest_url="$(wget -qO- https://www.boost.org/users/download/ | grep -o 'http[^"]*.tar.bz2' | head -1)"
-	wget -c -O "${SELF_DIR}/boost.tar.bz2" "${boost_latest_url}"
+	boost_url="$(wget -qO- https://www.boost.org/users/download/ | grep -o 'http[^"]*.tar.bz2' | head -1)"
+	[ -z "$BOOST_VERSION" ] || boost_url="https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost_$(echo "${BOOST_VERSION}" | tr "." "_").tar.bz2"
+	wget -c -O "${SELF_DIR}/boost.tar.bz2" "${boost_url}"
 fi
 tar -jxf "${SELF_DIR}/boost.tar.bz2" --strip-components=1 -C /usr/src/boost
 cd /usr/src/boost
@@ -184,8 +190,12 @@ make -j$(nproc)
 make install
 
 # libtorrent
+LIBTORRENT_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "1.1.14"}}')
+[ -z "$LIBTORRENT_VERSION_MAX" ] || LIBTORRENT_VERSION="${LIBTORRENT_VERSION_MAX}"
+LIBTORRENT_DL_URL="https://github.com/arvidn/libtorrent/archive/RC_1_2.tar.gz"
+[ -z "$LIBTORRENT_VERSION" ] || LIBTORRENT_DL_URL="https://github.com/arvidn/libtorrent/releases/download/v2.0.4/libtorrent-rasterbar-${LIBTORRENT_VERSION}.tar.gz"
 if [ ! -f "${SELF_DIR}/libtorrent.tar.gz" ]; then
-	wget -c -O "${SELF_DIR}/libtorrent.tar.gz" "https://github.com/arvidn/libtorrent/archive/${LIBTORRENT_BRANCH}.tar.gz"
+	wget -c -O "${SELF_DIR}/libtorrent.tar.gz" "${LIBTORRENT_DL_URL}"
 fi
 tar -zxf "${SELF_DIR}/libtorrent.tar.gz" --strip-components=1 -C /usr/src/libtorrent
 cd /usr/src/libtorrent
