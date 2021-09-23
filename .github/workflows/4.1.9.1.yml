@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         # arch_type: [x86_64, armhf, armv7, aarch64]
-        arch_type: ["mips"]
+        arch_type: ["mipsel"]
         boost_tag: ["-bt 1.68.0"]
         libtorrent_version: ["1.2"]
         icu_step_name: ["icu skipped"]
