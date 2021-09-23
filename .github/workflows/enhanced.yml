@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        qbittorrent_version: 4.1.9.17
+        qbittorrent_version: "4.1.9.17"
         include:
           # cross toolchain downloads from: https://musl.cc/
           # you need to find the name ${cross_host}-cross.tgz
