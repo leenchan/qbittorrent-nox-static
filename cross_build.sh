@@ -70,7 +70,7 @@ mkdir -p "${CROSS_ROOT}" \
 # download qbittorrent
 wget -c -O "${SELF_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" "https://github.com/c0re100/qBittorrent-Enhanced-Edition/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
 tar -zxf "${SELF_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" --strip-components=1 -C "${SELF_DIR}"
-[ -f "${SELF_DIR}/src/base/version.h.in" ] || exit 1
+[ -d "${SELF_DIR}/src" ] || exit 1
 
 # toolchain
 if [ ! -f "${SELF_DIR}/${CROSS_HOST}-cross.tgz" ]; then
