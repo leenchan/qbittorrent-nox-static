@@ -206,7 +206,7 @@ make install
 unset LIBS CPPFLAGS
 
 # build qbittorrent
-cd "${SELF_DIR}/../../"
+cd "${SELF_DIR}"
 if [ "${TARGET_HOST}" = 'win' ]; then
 	find \( -name '*.cpp' -o -name '*.h' \) -type f -print0 |
 		xargs -0 -r sed -i 's/Windows\.h/windows.h/g;
