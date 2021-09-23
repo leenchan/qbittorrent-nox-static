@@ -67,8 +67,6 @@ mkdir -p "${CROSS_ROOT}" \
 
 wget -c -O "${SELF_DIR}/release-4.3.8.10.tar.gz" "https://github.com/c0re100/qBittorrent-Enhanced-Edition/archive/refs/tags/release-4.3.8.10.tar.gz"
 tar -zxf "${SELF_DIR}/release-4.3.8.10.tar.gz" --strip-components=1 -C "${SELF_DIR}"
-ls -al "${SELF_DIR}"
-exit 0
 
 # toolchain
 if [ ! -f "${SELF_DIR}/${CROSS_HOST}-cross.tgz" ]; then
