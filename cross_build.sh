@@ -244,7 +244,7 @@ if [ "${TARGET_HOST}" = 'win' ]; then
                         s/include\s*<shared_mutex>/include "mingw.shared_mutex.h"/g;
                         s/include\s*<thread>/include "mingw.thread.h"/g'
 fi
-make -j$(nproc)
+make -j$(nproc) || exit 1
 make install
 unset LIBS CPPFLAGS
 
