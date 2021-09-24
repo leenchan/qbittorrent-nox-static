@@ -167,10 +167,10 @@ EOF
 #==================== Compile ====================
 #### Compile boost ####
 cd /usr/src/boost
-./b2 --show-libraries
-exit 1
 ./bootstrap.sh
 sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.jam
+./b2 --show-libraries
+exit 1
 ./b2 install --prefix="${CROSS_PREFIX}" --with-system toolset=gcc-cross variant=release link=static runtime-link=static
 
 #### Compile zlib ####
