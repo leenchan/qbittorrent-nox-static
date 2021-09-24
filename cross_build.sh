@@ -79,8 +79,8 @@ wget -c -O "${DL_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" "https://github.com
 tar -zxf "${DL_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" --strip-components=1 -C /usr/src/qbittorrent
 
 #### Download libtorrent
-# LIBTORRENT_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "libtorrent-1_1_14"}}')
-# [ -z "$LIBTORRENT_VERSION_MAX" ] || LIBTORRENT_VERSION="${LIBTORRENT_VERSION_MAX}"
+LIBTORRENT_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "libtorrent-1_1_14"}}')
+[ -z "$LIBTORRENT_VERSION_MAX" ] || LIBTORRENT_VERSION="${LIBTORRENT_VERSION_MAX}"
 LIBTORRENT_DL_URL="https://github.com/arvidn/libtorrent/archive/RC_1_2.tar.gz"
 [ -z "$LIBTORRENT_VERSION" ] || LIBTORRENT_DL_URL="https://github.com/arvidn/libtorrent/archive/refs/tags/${LIBTORRENT_VERSION}.tar.gz"
 if [ ! -f "${DL_DIR}/libtorrent.tar.gz" ]; then
@@ -120,8 +120,8 @@ fi
 tar -zxf "${DL_DIR}/openssl.tar.gz" --strip-components=1 -C /usr/src/openssl
 
 #### Download boost ####
-# BOOST_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "1.68.0"}}')
-# [ -z "$BOOST_VERSION_MAX" ] || BOOST_VERSION="${BOOST_VERSION_MAX}"
+BOOST_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "1.68.0"}}')
+[ -z "$BOOST_VERSION_MAX" ] || BOOST_VERSION="${BOOST_VERSION_MAX}"
 if [ ! -f "${DL_DIR}/boost.tar.bz2" ]; then
 	boost_url="$(wget -qO- https://www.boost.org/users/download/ | grep -o 'http[^"]*.tar.bz2' | head -1)"
 	[ -z "$BOOST_VERSION" ] || boost_url="https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost_$(echo "${BOOST_VERSION}" | tr "." "_").tar.bz2"
