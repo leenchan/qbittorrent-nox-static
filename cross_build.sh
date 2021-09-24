@@ -154,17 +154,16 @@ fi
 tar -zxf "${DL_DIR}/libiconv.tar.gz" --strip-components=1 -C /usr/src/libiconv/
 
 #### Download End / Check ####
-while read DIR
-do
+while read DIR; do
 	echo "Checking /usr/src/$DIR"
 	[ -z "$(ls /usr/src/$DIR)" ] || {
+		ls "/usr/src/$DIR"
 		echo "[ERR] Failed to download $DIR"
 		exit 1
 	}
-done <<-EOF
-$(ls /usr/src)
+done <<- EOF
+	$(ls /usr/src)
 EOF
-
 
 #==================== Compile ====================
 #### Compile zlib ####
