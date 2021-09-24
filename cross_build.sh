@@ -68,13 +68,13 @@ mkdir -p "${CROSS_ROOT}" \
 	/usr/src/libiconv \
 	/usr/src/libtorrent \
 	/usr/src/qtbase \
-	/usr/src/qttools
+	/usr/src/qttools \
+	/usr/src/qbittorrent
 
 #==================== Download ====================
 ##### Download qbittorrent ####
 wget -c -O "${SELF_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" "https://github.com/c0re100/qBittorrent-Enhanced-Edition/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
-tar -zxf "${SELF_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" --strip-components=1 -C "${SELF_DIR}"
-[ -d "${SELF_DIR}/src" ] || exit 1
+tar -zxf "${SELF_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" --strip-components=1 -C /usr/src/qbittorrent
 
 #### Download libtorrent
 LIBTORRENT_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "libtorrent-1_1_14"}}')
@@ -151,7 +151,7 @@ if [ ! -f "${SELF_DIR}/libiconv.tar.gz" ]; then
 fi
 tar -zxf "${SELF_DIR}/libiconv.tar.gz" --strip-components=1 -C /usr/src/libiconv/
 
-ls -al /usr/src | while read D; do echo "/usr/src/$D:" && ls -al /usr/src/$D; done
+ls /usr/src | while read D; do echo "/usr/src/$D:" && ls -al /usr/src/$D; done
 exit 1
 
 #==================== Compile ====================
@@ -238,7 +238,7 @@ make install
 unset LIBS CPPFLAGS
 
 #### Compile qbittorrent ####
-cd "${SELF_DIR}"
+cd /usr/src/qbittorrent
 if [ "${TARGET_HOST}" = 'win' ]; then
 	find \( -name '*.cpp' -o -name '*.h' \) -type f -print0 |
 		xargs -0 -r sed -i 's/Windows\.h/windows.h/g;
