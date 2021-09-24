@@ -90,6 +90,7 @@ jobs:
         with:
           name: qbittorrent-nox_${{ matrix.cross_host }}_static
           path: |
+            /cross_root
             /tmp/qbittorrent-nox*
       # - name: Upload Github Assets
       #   if: startsWith(github.ref, 'refs/tags/')
