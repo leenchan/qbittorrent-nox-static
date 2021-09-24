@@ -228,10 +228,11 @@ make install
 
 #### Compile libtorrent ####
 cd /usr/src/libtorrent
+export CPPFLAGS='-DBOOST_ASIO_HAS_STD_CHRONO'
 if [ "${TARGET_HOST}" = 'win' ]; then
  export LIBS="-lcrypt32 -lws2_32"
  # musl.cc x86_64-w64-mingw32 toolchain not supports thread local
- export CPPFLAGS='-D_WIN32_WINNT=0x0602 -DBOOST_NO_CXX11_THREAD_LOCAL'
+ export CPPFLAGS='-D_WIN32_WINNT=0x0602 -DBOOST_NO_CXX11_THREAD_LOCAL -DBOOST_ASIO_HAS_STD_CHRONO'
 fi
 ./bootstrap.sh CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules --with-boost="${CROSS_PREFIX}" --with-libiconv
 # fix x86_64-w64-mingw32 build
