@@ -70,12 +70,13 @@ mkdir -p "${CROSS_ROOT}" \
 	/usr/src/qtbase \
 	/usr/src/qttools
 
-# download qbittorrent
+#==================== Download ====================
+##### Download qbittorrent ####
 wget -c -O "${SELF_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" "https://github.com/c0re100/qBittorrent-Enhanced-Edition/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
 tar -zxf "${SELF_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" --strip-components=1 -C "${SELF_DIR}"
 [ -d "${SELF_DIR}/src" ] || exit 1
 
-# download libtorrent
+#### Download libtorrent
 LIBTORRENT_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "libtorrent-1_1_14"}}')
 [ -z "$LIBTORRENT_VERSION_MAX" ] || LIBTORRENT_VERSION="${LIBTORRENT_VERSION_MAX}"
 LIBTORRENT_DL_URL="https://github.com/arvidn/libtorrent/archive/RC_1_2.tar.gz"
@@ -85,9 +86,8 @@ if [ ! -f "${SELF_DIR}/libtorrent.tar.gz" ]; then
 fi
 tar -zxf "${SELF_DIR}/libtorrent.tar.gz" --strip-components=1 -C /usr/src/libtorrent
 ls /usr/src/libtorrent
-exit 1
 
-# toolchain
+#### Download toolchain ####
 if [ ! -f "${SELF_DIR}/${CROSS_HOST}-cross.tgz" ]; then
 	wget -c -O "${SELF_DIR}/${CROSS_HOST}-cross.tgz" "https://musl.cc/${CROSS_HOST}-cross.tgz"
 fi
@@ -102,35 +102,22 @@ if [ "${TARGET_HOST}" = 'win' ]; then
 	cp -fv /usr/src/mingw-std-threads/*.h "${CROSS_PREFIX}/include"
 fi
 
-# zlib
+#### Download zlib ####
 if [ ! -f "${SELF_DIR}/zlib.tar.gz" ]; then
 	zlib_latest_url="$(wget -qO- https://api.github.com/repos/madler/zlib/tags | jq -r '.[0].tarball_url')"
 	wget -c -O "${SELF_DIR}/zlib.tar.gz" "${zlib_latest_url}"
 fi
 tar -zxf "${SELF_DIR}/zlib.tar.gz" --strip-components=1 -C /usr/src/zlib
-cd /usr/src/zlib
-if [ "${TARGET_HOST}" = win ]; then
-	make -f win32/Makefile.gcc BINARY_PATH="${CROSS_PREFIX}/bin" INCLUDE_PATH="${CROSS_PREFIX}/include" LIBRARY_PATH="${CROSS_PREFIX}/lib" SHARED_MODE=0 PREFIX="${CROSS_HOST}-" -j$(nproc) install
-else
-	CHOST="${CROSS_HOST}" ./configure --prefix="${CROSS_PREFIX}" --static
-	make -j$(nproc)
-	make install
-fi
 
-# openssl
+#### Download openssl ####
 if [ ! -f "${SELF_DIR}/openssl.tar.gz" ]; then
 	openssl_filename="$(wget -qO- https://www.openssl.org/source/ | grep -o 'href="openssl-1.*tar.gz"' | grep -o '[^"]*.tar.gz')"
 	openssl_latest_url="https://www.openssl.org/source/${openssl_filename}"
 	wget -c -O "${SELF_DIR}/openssl.tar.gz" "${openssl_latest_url}"
 fi
 tar -zxf "${SELF_DIR}/openssl.tar.gz" --strip-components=1 -C /usr/src/openssl
-cd /usr/src/openssl
-./Configure -static --cross-compile-prefix="${CROSS_HOST}-" --prefix="${CROSS_PREFIX}" "${OPENSSL_COMPILER}"
-make depend
-make -j$(nproc)
-make install_sw
 
-# boost
+#### Download boost ####
 BOOST_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "1.68.0"}}')
 [ -z "$BOOST_VERSION_MAX" ] || BOOST_VERSION="${BOOST_VERSION_MAX}"
 if [ ! -f "${SELF_DIR}/boost.tar.bz2" ]; then
@@ -139,12 +126,8 @@ if [ ! -f "${SELF_DIR}/boost.tar.bz2" ]; then
 	wget -c -O "${SELF_DIR}/boost.tar.bz2" "${boost_url}"
 fi
 tar -jxf "${SELF_DIR}/boost.tar.bz2" --strip-components=1 -C /usr/src/boost
-cd /usr/src/boost
-./bootstrap.sh
-sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.jam
-./b2 install --prefix="${CROSS_PREFIX}" --with-system toolset=gcc-cross variant=release link=static runtime-link=static
 
-# qt
+#### Download qt ####
 qt_major_ver="$(wget -qO- https://download.qt.io/official_releases/qt/ | sed -nr 's@.*href="([0-9]+(\.[0-9]+)*)/".*@\1@p' | grep "^${QT_VER_PREFIX}" | head -1)"
 qt_ver="$(wget -qO- https://download.qt.io/official_releases/qt/${qt_major_ver}/ | sed -nr 's@.*href="([0-9]+(\.[0-9]+)*)/".*@\1@p' | grep "^${QT_VER_PREFIX}" | head -1)"
 echo "Using qt version: ${qt_ver}"
@@ -160,6 +143,42 @@ if [ ! -f "${SELF_DIR}/${qttools_filename}" ]; then
 fi
 tar -Jxf "${SELF_DIR}/${qtbase_filename}" --strip-components=1 -C /usr/src/qtbase
 tar -Jxf "${SELF_DIR}/${qttools_filename}" --strip-components=1 -C /usr/src/qttools
+
+#### Download libiconv ####
+if [ ! -f "${SELF_DIR}/libiconv.tar.gz" ]; then
+	libiconv_latest_url="$(wget -qO- https://www.gnu.org/software/libiconv/ | grep -o '[^>< "]*ftp.gnu.org/pub/gnu/libiconv/.[^>< "]*' | head -1)"
+	wget -c -O "${SELF_DIR}/libiconv.tar.gz" "${libiconv_latest_url}"
+fi
+tar -zxf "${SELF_DIR}/libiconv.tar.gz" --strip-components=1 -C /usr/src/libiconv/
+
+ls -al /usr/src | while read D; do echo "/usr/src/$D:" && ls -al /usr/src/$D; done
+exit 1
+
+#==================== Compile ====================
+#### Compile zlib ####
+cd /usr/src/zlib
+if [ "${TARGET_HOST}" = win ]; then
+	make -f win32/Makefile.gcc BINARY_PATH="${CROSS_PREFIX}/bin" INCLUDE_PATH="${CROSS_PREFIX}/include" LIBRARY_PATH="${CROSS_PREFIX}/lib" SHARED_MODE=0 PREFIX="${CROSS_HOST}-" -j$(nproc) install
+else
+	CHOST="${CROSS_HOST}" ./configure --prefix="${CROSS_PREFIX}" --static
+	make -j$(nproc)
+	make install
+fi
+
+#### Compile openssl ####
+cd /usr/src/openssl
+./Configure -static --cross-compile-prefix="${CROSS_HOST}-" --prefix="${CROSS_PREFIX}" "${OPENSSL_COMPILER}"
+make depend
+make -j$(nproc)
+make install_sw
+
+#### Compile boost ####
+cd /usr/src/boost
+./bootstrap.sh
+sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.jam
+./b2 install --prefix="${CROSS_PREFIX}" --with-system toolset=gcc-cross variant=release link=static runtime-link=static
+
+#### Compile qt ####
 cd /usr/src/qtbase
 # Remove some options no support by this toolchain
 find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fno-fat-lto-objects//g'
@@ -190,18 +209,13 @@ make -j$(nproc) install
 cd "${CROSS_ROOT}/bin"
 ln -sf lrelease "lrelease-qt${qt_ver:1:1}"
 
-# libiconv
-if [ ! -f "${SELF_DIR}/libiconv.tar.gz" ]; then
-	libiconv_latest_url="$(wget -qO- https://www.gnu.org/software/libiconv/ | grep -o '[^>< "]*ftp.gnu.org/pub/gnu/libiconv/.[^>< "]*' | head -1)"
-	wget -c -O "${SELF_DIR}/libiconv.tar.gz" "${libiconv_latest_url}"
-fi
-tar -zxf "${SELF_DIR}/libiconv.tar.gz" --strip-components=1 -C /usr/src/libiconv/
+#### Compile libiconv ####
 cd /usr/src/libiconv/
 ./configure CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules
 make -j$(nproc)
 make install
 
-# libtorrent
+#### Compile libtorrent ####
 cd /usr/src/libtorrent
 if [ "${TARGET_HOST}" = 'win' ]; then
 	export LIBS="-lcrypt32 -lws2_32"
@@ -223,7 +237,7 @@ make -j$(nproc)
 make install
 unset LIBS CPPFLAGS
 
-# build qbittorrent
+#### Compile qbittorrent ####
 cd "${SELF_DIR}"
 if [ "${TARGET_HOST}" = 'win' ]; then
 	find \( -name '*.cpp' -o -name '*.h' \) -type f -print0 |
