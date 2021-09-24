@@ -43,17 +43,17 @@ apk add gcc \
 TARGET_ARCH="${CROSS_HOST%%-*}"
 TARGET_HOST="${CROSS_HOST#*-}"
 case "${TARGET_HOST}" in
-	*"mingw"*)
-		TARGET_HOST=win
-		apk add wine
-		export WINEPREFIX=/tmp/
-		RUNNER_CHECKER="wine64"
-		;;
-	*)
-		TARGET_HOST=linux
-		apk add "qemu-${TARGET_ARCH}"
-		RUNNER_CHECKER="qemu-${TARGET_ARCH}"
-		;;
+*"mingw"*)
+	TARGET_HOST=win
+	apk add wine
+	export WINEPREFIX=/tmp/
+	RUNNER_CHECKER="wine64"
+	;;
+*)
+	TARGET_HOST=linux
+	apk add "qemu-${TARGET_ARCH}"
+	RUNNER_CHECKER="qemu-${TARGET_ARCH}"
+	;;
 esac
 
 export PATH="${CROSS_ROOT}/bin:${PATH}"
@@ -87,7 +87,6 @@ if [ ! -f "${DL_DIR}/libtorrent.tar.gz" ]; then
 	wget -c -O "${DL_DIR}/libtorrent.tar.gz" "${LIBTORRENT_DL_URL}"
 fi
 tar -zxf "${DL_DIR}/libtorrent.tar.gz" --strip-components=1 -C /usr/src/libtorrent
-ls /usr/src/libtorrent
 
 #### Download toolchain ####
 if [ ! -f "${DL_DIR}/${CROSS_HOST}-cross.tgz" ]; then
@@ -161,7 +160,7 @@ while read DIR; do
 		echo "[ERR] Failed to download $DIR"
 		exit 1
 	}
-done <<- EOF
+done <<-EOF
 	$(ls /usr/src)
 EOF
 
@@ -271,7 +270,7 @@ else
 fi
 
 # check
-"${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2> /dev/null
+"${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
 
 # archive qbittorrent
 zip -j9v "${SELF_DIR}/qbittorrent-nox_${CROSS_HOST}_static.zip" /tmp/qbittorrent-nox*
