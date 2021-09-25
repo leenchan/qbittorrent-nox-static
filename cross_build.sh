@@ -223,7 +223,8 @@ sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.j
 # - timer
 # - type_erasure
 # - wave
-./b2 install --prefix="${CROSS_PREFIX}" --with-system --with-chrono --with-random toolset=gcc-cross variant=release link=static runtime-link=static
+[ -z "$BOOST_VERSION" ] && boost_with_libs=$(echo "$BOOST_VERSION" | awk -F'.' '{if ($1<=1 && $2<=68) {print "--with-chrono --with-random"}}')
+./b2 install --prefix="${CROSS_PREFIX}" --with-system $boost_with_libs toolset=gcc-cross variant=release link=static runtime-link=static
 
 #### Compile qt ####
 cd /usr/src/qtbase
