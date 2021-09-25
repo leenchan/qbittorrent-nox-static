@@ -254,7 +254,7 @@ find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fuse-linker-plugin//g'
 find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-mfloat-abi=softfp//g'
 make -j$(nproc) install
 cd "${CROSS_ROOT}/bin"
-ln -sf lrelease "lrelease-qt${qt_ver:1:1}"
+ln -sf lrelease "lrelease-qt$(echo "${qt_ver}" | grep -Eo "^[1-9]")"
 
 #### Compile libiconv ####
 cd /usr/src/libiconv/
@@ -308,6 +308,7 @@ fi
 # check
 "${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
 ls -al "${CROSS_ROOT}/bin"
+echo "qt_ver: ${qt_ver}"
 
 # archive qbittorrent
 zip -j9v "${SELF_DIR}/qbittorrent-nox_${CROSS_HOST}_static.zip" /tmp/qbittorrent-nox*
