@@ -307,6 +307,7 @@ fi
 
 # check
 "${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
+ls -al "${CROSS_ROOT}/bin"
 
 # archive qbittorrent
 zip -j9v "${SELF_DIR}/qbittorrent-nox_${CROSS_HOST}_static.zip" /tmp/qbittorrent-nox*
