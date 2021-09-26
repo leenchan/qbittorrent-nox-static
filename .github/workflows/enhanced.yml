@@ -99,7 +99,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ".github/workflows/qbittorrent-nox_${{ matrix.cross_host }}_static.zip"
+          file: "qbittorrent-nox_${{ matrix.cross_host }}_static.zip"
           tag: v${{ env.QBITTORRENT_VERSION }}-enhanced
           overwrite: true
       - name: Upload Github Assets
@@ -107,6 +107,6 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ".github/workflows/qbittorrent-nox_${{ matrix.cross_host }}_static.zip"
+          file: "qbittorrent-nox_${{ matrix.cross_host }}_static.zip"
           tag: v${{ env.QBITTORRENT_VERSION }}
           overwrite: true
