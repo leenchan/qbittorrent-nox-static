@@ -5,7 +5,7 @@
 [ -z "$QBITTORRENT_VERSION" ] && QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
 [ -z "$CROSS_ROOT" ] && CROSS_ROOT="/cross_root"
 
-case "${BUILD_TARGETS}" in
+case "$BUILD_TARGETS" in
 "arm")
 	CROSS_HOST="arm-linux-musleabi"
 	OPENSSL_COMPILER="linux-armv4"
@@ -318,11 +318,11 @@ fi
 # compression
 [ "$UPX_COMPRESSION" = "true" ] && upx --lzma --best /tmp/qbittorrent-nox
 
-# check
+# check qbittorrent version
 echo "Checking qBittorrent Version ... (${RUNNER_CHECKER})"
 "${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
 # ls -al "${CROSS_ROOT}/bin"
 # echo "qt_ver: ${qt_ver}"
 
 # archive qbittorrent
-zip -j9v "${SELF_DIR}/qbittorrent-nox_${CROSS_HOST}_static.zip" /tmp/qbittorrent-nox*
+zip -j9v "${SELF_DIR}/qbittorrent-nox_${BUILD_TARGETS}_static.zip" /tmp/qbittorrent-nox*
