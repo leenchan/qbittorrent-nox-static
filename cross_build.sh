@@ -8,6 +8,8 @@
 # sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories
 
 # value from: https://musl.cc/ (without -cross or -native)
+echo "qBittorrent Version: $QBITTORRENT_VERSION"
+exit 1
 export CROSS_HOST="${CROSS_HOST:-arm-linux-musleabi}"
 # value from openssl source: ./Configure LIST
 export OPENSSL_COMPILER="${OPENSSL_COMPILER:-linux-armv4}"
@@ -308,8 +310,8 @@ fi
 
 # check
 "${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
-ls -al "${CROSS_ROOT}/bin"
-echo "qt_ver: ${qt_ver}"
+# ls -al "${CROSS_ROOT}/bin"
+# echo "qt_ver: ${qt_ver}"
 
 # archive qbittorrent
 zip -j9v "${SELF_DIR}/qbittorrent-nox_${CROSS_HOST}_static.zip" /tmp/qbittorrent-nox*
