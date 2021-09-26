@@ -43,11 +43,12 @@ jobs:
   # cross compile for some other platforms, like arm, mips, etc.
   cross-compile:
     runs-on: ubuntu-latest
+    timeout-minutes: 3000
     container: "alpine:latest"
     strategy:
       fail-fast: false
       matrix:
-        cross_host: ["mips-linux-musln32sf", "mipsel-linux-musln32sf"]
+        cross_host: [mips-linux-musln32sf, mipsel-linux-musln32sf]
         include:
           # cross toolchain downloads from: https://musl.cc/
           # you need to find the name ${cross_host}-cross.tgz
