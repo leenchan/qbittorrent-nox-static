@@ -29,7 +29,7 @@ jobs:
       QBITTORRENT_VERSION: "4.1.9.17"
       QBITTORRENT_ENHANCED: true
       UPX_COMPRESSION: false
-      BUILD_TARGETS: "${{matrix.build_target}}"
+      BUILD_TARGET: "${{matrix.build_target}}"
     steps:
       - name: Checkout
         uses: actions/checkout@v2

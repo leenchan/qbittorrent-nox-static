@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-case "$BUILD_TARGETS" in
+case "$BUILD_TARGET" in
 "arm")
 	CROSS_HOST="arm-linux-musleabi"
 	OPENSSL_COMPILER="linux-armv4"
