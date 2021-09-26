@@ -1,4 +1,4 @@
-name: enhanced edition
+name: Cross Build qBittorrent Static
 
 on:
   workflow_dispatch:
