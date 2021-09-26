@@ -48,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cross_host: [mips-linux-musln32sf, mipsel-linux-musln32sf]
+        build_target: [mips-linux-musln32sf, mipsel-linux-musln32sf]
         include:
           # cross toolchain downloads from: https://musl.cc/
           # you need to find the name ${cross_host}-cross.tgz
@@ -78,10 +78,12 @@ jobs:
           - cross_host: x86_64-w64-mingw32
             openssl_compiler: mingw64
             qt_xplatform: win32-g++
+    name: "${{ matrix.build_target }}"
     env:
       QBITTORRENT_VERSION: "4.1.9.17"
       QBITTORRENT_ENHANCED: true
       UPX_COMPRESSION: true
+      BUILD_TARGETS: "${{matrix.targets}}"
       CROSS_HOST: "${{ matrix.cross_host }}"
       OPENSSL_COMPILER: "${{ matrix.openssl_compiler }}"
       QT_DEVICE: "${{ matrix.qt_device }}"
