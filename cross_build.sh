@@ -297,7 +297,8 @@ fi
 [ "$UPX_COMPRESSION" = "true" ] && upx --lzma --best /tmp/qbittorrent-nox
 
 # check
-# "${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
+echo "Checking qBittorrent Version ... (${RUNNER_CHECKER})"
+"${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
 # ls -al "${CROSS_ROOT}/bin"
 # echo "qt_ver: ${qt_ver}"
 
