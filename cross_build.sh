@@ -9,6 +9,7 @@
 
 # value from: https://musl.cc/ (without -cross or -native)
 echo "qBittorrent Version: $QBITTORRENT_VERSION"
+echo "Enhanced: $QBITTORRENT_ENHANCED"
 exit 1
 export CROSS_HOST="${CROSS_HOST:-arm-linux-musleabi}"
 # value from openssl source: ./Configure LIST

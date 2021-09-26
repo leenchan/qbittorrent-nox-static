@@ -45,6 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       QBITTORRENT_VERSION: "4.1.9.17"
+      QBITTORRENT_ENHANCED: true
     container: "alpine:latest"
     strategy:
       fail-fast: false
