@@ -75,7 +75,7 @@ mkdir -p "${CROSS_ROOT}" \
 	/usr/src/qbittorrent
 
 dl_file() {
-	aria2c -x 16 -d "${DL_DIR}" -o "$2" "$1" || exit 1
+	aria2c -c -x 16 -d "${DL_DIR}" -o "$2" "$1" || exit 1
 }
 
 #==================== Download ====================
