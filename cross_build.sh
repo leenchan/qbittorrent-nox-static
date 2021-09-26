@@ -329,4 +329,4 @@ echo "Checking qBittorrent Version ... (${RUNNER_CHECKER})"
 # echo "qt_ver: ${qt_ver}"
 
 # archive qbittorrent
-zip -j9v "${SELF_DIR}/qbittorrent-nox_${BUILD_TARGETS}_static.zip" /tmp/qbittorrent-nox*
+zip -j9v "${SELF_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox*
