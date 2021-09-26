@@ -22,7 +22,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_target: [mips, mipsel]
+        # arm, aarch64, mips, mipsel, mips64, x86_64, win32
+        build_target: [arm, aarch64, mips, mipsel, mips64, x86_64]
     name: "${{ matrix.build_target }}"
     env:
       QBITTORRENT_VERSION: "4.1.9.17"

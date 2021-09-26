@@ -36,7 +36,7 @@ case "$BUILD_TARGETS" in
 	OPENSSL_COMPILER="linux-x86_64"
 	QT_DEVICE: "linux-generic-g++"
 	;;
-"x86_64-w64")
+"win32")
 	CROSS_HOST="x86_64-w64-mingw32"
 	OPENSSL_COMPILER="mingw64"
 	QT_XPLATFORM="win32-g++"
