@@ -48,46 +48,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cross_host: [mips-linux-musln32sf, mipsel-linux-musln32sf]
+        build_target: [mips, mipsel]
         include:
-          # cross toolchain downloads from: https://musl.cc/
-          # you need to find the name ${cross_host}-cross.tgz
-          # openssl_compiler choose from openssl source directory `./Configure LIST`
-          # qt_device choose from https://github.com/qt/qtbase/tree/dev/mkspecs/devices/
-          # qt_xplatform choose from https://github.com/qt/qtbase/tree/dev/mkspecs/
-          - cross_host: arm-linux-musleabi
-            openssl_compiler: linux-armv4
-            qt_device: linux-arm-generic-g++
-          - cross_host: aarch64-linux-musl
-            openssl_compiler: linux-aarch64
-            qt_device: linux-arm-generic-g++
-          # - cross_host: mips-linux-musl
-          - cross_host: mips-linux-musln32sf
-            openssl_compiler: linux-mips32
-            qt_device: linux-generic-g++
-          # - cross_host: mipsel-linux-musl
-          - cross_host: mipsel-linux-musln32sf
-            openssl_compiler: linux-mips32
-            qt_device: linux-generic-g++
-          - cross_host: mips64-linux-musl
-            openssl_compiler: linux64-mips64
-            qt_device: linux-generic-g++
-          - cross_host: x86_64-linux-musl
-            openssl_compiler: linux-x86_64
-            qt_device: linux-generic-g++
-          - cross_host: x86_64-w64-mingw32
-            openssl_compiler: mingw64
-            qt_xplatform: win32-g++
     name: "${{ matrix.build_target }}"
     env:
       QBITTORRENT_VERSION: "4.1.9.17"
       QBITTORRENT_ENHANCED: true
-      UPX_COMPRESSION: true
-      BUILD_TARGETS: "${{matrix.targets}}"
-      CROSS_HOST: "${{ matrix.cross_host }}"
-      OPENSSL_COMPILER: "${{ matrix.openssl_compiler }}"
-      QT_DEVICE: "${{ matrix.qt_device }}"
-      QT_XPLATFORM: "${{matrix.qt_xplatform}}"
+      UPX_COMPRESSION: false
+      BUILD_TARGETS: "${{matrix.build_target}}"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
