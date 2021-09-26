@@ -1,10 +1,5 @@
 #!/bin/sh -e
 
-# match qt version prefix. E.g 5 --> 5.15.2, 5.12 --> 5.12.10
-[ -z "$QT_VER_PREFIX" ] && QT_VER_PREFIX="5"
-[ -z "$QBITTORRENT_VERSION" ] && QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
-[ -z "$CROSS_ROOT" ] && CROSS_ROOT="/cross_root"
-
 case "$BUILD_TARGETS" in
 "arm")
 	CROSS_HOST="arm-linux-musleabi"
@@ -46,6 +41,21 @@ case "$BUILD_TARGETS" in
 	;;
 esac
 
+export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
+export CROSS_HOST="$CROSS_HOST"
+export OPENSSL_COMPILER="$OPENSSL_COMPILER"
+export QT_DEVICE="$QT_DEVICE"
+export QT_XPLATFORM="$QT_XPLATFORM"
+export QT_VER_PREFIX="${QT_VER_PREFIX:-5}"
+export LIBTORRENT_VERSION="$LIBTORRENT_VERSION"
+export QBITTORRENT_VERSION="$QBITTORRENT_VERSION"
+export PATH="${CROSS_ROOT}/bin:${PATH}"
+export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
+export PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+SELF_DIR="$(dirname "$(readlink -f "${0}")")"
+DL_DIR="/tmp/download"
+[ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
+
 apk add gcc \
 	g++ \
 	make \
@@ -79,12 +89,6 @@ case "${TARGET_HOST}" in
 	RUNNER_CHECKER="qemu-${TARGET_ARCH}"
 	;;
 esac
-
-export PATH="${CROSS_ROOT}/bin:${PATH}"
-export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
-export PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
-SELF_DIR="$(dirname "$(readlink -f "${0}")")"
-DL_DIR="/tmp/download"
 
 mkdir -p "${CROSS_ROOT}" \
 	${DL_DIR} \
