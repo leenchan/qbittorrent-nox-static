@@ -7,6 +7,8 @@
 # alpine repository mirror for local building
 # sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories
 
+env
+exit
 # value from: https://musl.cc/ (without -cross or -native)
 export CROSS_HOST="${CROSS_HOST:-arm-linux-musleabi}"
 # value from openssl source: ./Configure LIST
