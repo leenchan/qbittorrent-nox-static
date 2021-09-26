@@ -277,7 +277,7 @@ else
  cp -fv "${CROSS_PREFIX}/bin/qbittorrent-nox" /tmp/
 fi
 # compression
-[ "$UPX_COMPRESSION" = "true" ] && upx --lzma --best /tmp/qbittorrent-nox
+# [ "$UPX_COMPRESSION" = "true" ] && upx --lzma --best /tmp/qbittorrent-nox
 
 # check
 "${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
