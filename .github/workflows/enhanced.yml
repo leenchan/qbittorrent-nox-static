@@ -49,7 +49,7 @@ jobs:
       fail-fast: false
       matrix:
         build_target: [mips, mipsel]
-        include:
+        # include:
     name: "${{ matrix.build_target }}"
     env:
       QBITTORRENT_VERSION: "4.1.9.17"
