@@ -81,15 +81,15 @@ jobs:
           - cross_host: x86_64-w64-mingw32
             openssl_compiler: mingw64
             qt_xplatform: win32-g++
+    env:
+      CROSS_HOST: "${{ matrix.cross_host }}"
+      OPENSSL_COMPILER: "${{ matrix.openssl_compiler }}"
+      QT_DEVICE: "${{ matrix.qt_device }}"
+      QT_XPLATFORM: "${{matrix.qt_xplatform}}"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: cross compile nox-static
-        env:
-          CROSS_HOST: "${{ matrix.cross_host }}"
-          OPENSSL_COMPILER: "${{ matrix.openssl_compiler }}"
-          QT_DEVICE: "${{ matrix.qt_device }}"
-          QT_XPLATFORM: "${{matrix.qt_xplatform}}"
         run: sh cross_build.sh
       - uses: actions/upload-artifact@v2
         with:
