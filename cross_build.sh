@@ -37,6 +37,7 @@ apk add gcc \
 	linux-headers \
 	zip \
 	xz \
+	curl \
 	upx \
 	aria2
 
