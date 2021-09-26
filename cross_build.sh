@@ -1,29 +1,50 @@
 #!/bin/sh -e
-# This scrip is for cross compilations
-# Please run this scrip in docker image: alpine:latest
-# E.g: docker run -e CROSS_HOST=arm-linux-musleabi -e OPENSSL_COMPILER=linux-armv4 -e QT_DEVICE=linux-arm-generic-g++ --rm -v `git rev-parse --show-toplevel`:/build alpine /build/.github/workflows/cross_build.sh
-# Artifacts will copy to the same directory.
 
-# alpine repository mirror for local building
-# sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories
-
-env
-exit
-# value from: https://musl.cc/ (without -cross or -native)
-export CROSS_HOST="${CROSS_HOST:-arm-linux-musleabi}"
-# value from openssl source: ./Configure LIST
-export OPENSSL_COMPILER="${OPENSSL_COMPILER:-linux-armv4}"
-# value from https://github.com/qt/qtbase/tree/dev/mkspecs/
-export QT_XPLATFORM="${QT_XPLATFORM}"
-# value from https://github.com/qt/qtbase/tree/dev/mkspecs/devices/
-export QT_DEVICE="${QT_DEVICE}"
 # match qt version prefix. E.g 5 --> 5.15.2, 5.12 --> 5.12.10
-export QT_VER_PREFIX="5"
-export BOOST_VERSION="${BOOST_VERSION}"
-export LIBTORRENT_VERSION="${LIBTORRENT_VERSION}"
-export QBITTORRENT_VERSION="${QBITTORRENT_VERSION}"
-[ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
-export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
+[ -z "$QT_VER_PREFIX" ] && QT_VER_PREFIX="5"
+[ -z "$QBITTORRENT_VERSION" ] && QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
+[ -z "$CROSS_ROOT" ] && CROSS_ROOT="/cross_root"
+
+case "${BUILD_TARGETS}" in
+"arm")
+	CROSS_HOST="arm-linux-musleabi"
+	OPENSSL_COMPILER="linux-armv4"
+	QT_DEVICE: "linux-arm-generic-g++"
+	;;
+"aarch64")
+	CROSS_HOST="aarch64-linux-musl"
+	OPENSSL_COMPILER="linux-aarch64"
+	QT_DEVICE: "linux-arm-generic-g++"
+	;;
+"mips")
+	CROSS_HOST="mips-linux-musln32sf"
+	OPENSSL_COMPILER="linux-mips32"
+	QT_DEVICE: "linux-generic-g++"
+	;;
+"mipsel")
+	CROSS_HOST="mipsel-linux-musln32sf"
+	OPENSSL_COMPILER="linux-mips32"
+	QT_DEVICE: "linux-generic-g++"
+	;;
+"mips64")
+	CROSS_HOST="mips64-linux-musl"
+	OPENSSL_COMPILER="linux64-mips64"
+	QT_DEVICE: "linux-generic-g++"
+	;;
+"x86_64")
+	CROSS_HOST="x86_64-linux-musl"
+	OPENSSL_COMPILER="linux-x86_64"
+	QT_DEVICE: "linux-generic-g++"
+	;;
+"x86_64-w64")
+	CROSS_HOST="x86_64-w64-mingw32"
+	OPENSSL_COMPILER="mingw64"
+	QT_XPLATFORM="win32-g++"
+	;;
+*)
+	exit 1
+	;;
+esac
 
 apk add gcc \
 	g++ \
@@ -76,11 +97,10 @@ mkdir -p "${CROSS_ROOT}" \
 	/usr/src/qttools \
 	/usr/src/qbittorrent
 
+#==================== Download ====================
 dl_file() {
 	aria2c -c -x 16 -d "${DL_DIR}" -o "$2" "$1" || exit 1
 }
-
-#==================== Download ====================
 ##### Download qbittorrent ####
 QBITTORRENT_DL_URL="https://github.com/qbittorrent/qBittorrent/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
 [ "$QBITTORRENT_ENHANCED" = "true" ] && QBITTORRENT_DL_URL="https://github.com/c0re100/qBittorrent-Enhanced-Edition/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
