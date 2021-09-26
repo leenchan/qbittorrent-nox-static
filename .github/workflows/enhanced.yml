@@ -46,6 +46,7 @@ jobs:
     env:
       QBITTORRENT_VERSION: "4.1.9.17"
       QBITTORRENT_ENHANCED: true
+      UPX_COMPRESSION: true
     container: "alpine:latest"
     strategy:
       fail-fast: false
@@ -87,18 +88,25 @@ jobs:
           OPENSSL_COMPILER: "${{ matrix.openssl_compiler }}"
           QT_DEVICE: "${{ matrix.qt_device }}"
           QT_XPLATFORM: "${{matrix.qt_xplatform}}"
-          # QBITTORRENT_VERSION: "4.1.9.17"
         run: sh cross_build.sh
       - uses: actions/upload-artifact@v2
         with:
           name: qbittorrent-nox_${{ matrix.cross_host }}_static
           path: |
             /tmp/qbittorrent-nox*
-      - name: Upload Github Assets
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Upload Github Assets (Enhanced Edition)
+        if: ${{ env.QBITTORRENT_ENHANCED == 'true' }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ".github/workflows/qbittorrent-nox_${{ matrix.cross_host }}_static.zip"
-          tag: ${{ github.ref }}
+          tag: v${{ env.QBITTORRENT_VERSION }}-enhanced
+          overwrite: true
+      - name: Upload Github Assets
+        if: ${{ env.QBITTORRENT_ENHANCED != 'true' }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ".github/workflows/qbittorrent-nox_${{ matrix.cross_host }}_static.zip"
+          tag: v${{ env.QBITTORRENT_VERSION }}
           overwrite: true

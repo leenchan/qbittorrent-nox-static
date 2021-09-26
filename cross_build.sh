@@ -8,9 +8,6 @@
 # sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories
 
 # value from: https://musl.cc/ (without -cross or -native)
-echo "qBittorrent Version: $QBITTORRENT_VERSION"
-echo "Enhanced: $QBITTORRENT_ENHANCED"
-exit 1
 export CROSS_HOST="${CROSS_HOST:-arm-linux-musleabi}"
 # value from openssl source: ./Configure LIST
 export OPENSSL_COMPILER="${OPENSSL_COMPILER:-linux-armv4}"
@@ -24,8 +21,6 @@ export BOOST_VERSION="${BOOST_VERSION}"
 export LIBTORRENT_VERSION="${LIBTORRENT_VERSION}"
 export QBITTORRENT_VERSION="${QBITTORRENT_VERSION}"
 [ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
-
-https://github.com/arvidn/libtorrent/archive/refs/tags/libtorrent-1_1_14.tar.gz
 export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
 
 apk add gcc \
@@ -41,6 +36,7 @@ apk add gcc \
 	pkgconfig \
 	linux-headers \
 	zip \
+	upx \
 	xz
 
 TARGET_ARCH="${CROSS_HOST%%-*}"
@@ -78,7 +74,9 @@ mkdir -p "${CROSS_ROOT}" \
 
 #==================== Download ====================
 ##### Download qbittorrent ####
-wget -c -O "${DL_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" "https://github.com/c0re100/qBittorrent-Enhanced-Edition/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
+QBITTORRENT_DL_URL="https://github.com/qbittorrent/qBittorrent/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
+[ "$QBITTORRENT_ENHANCED" = "true" ] && QBITTORRENT_DL_URL="https://github.com/c0re100/qBittorrent-Enhanced-Edition/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
+wget -c -O "${DL_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" "${QBITTORRENT_DL_URL}" || exit 1
 tar -zxf "${DL_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" --strip-components=1 -C /usr/src/qbittorrent
 
 #### Download libtorrent
@@ -87,19 +85,19 @@ LIBTORRENT_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 &
 LIBTORRENT_DL_URL="https://github.com/arvidn/libtorrent/archive/RC_1_2.tar.gz"
 [ -z "$LIBTORRENT_VERSION" ] || LIBTORRENT_DL_URL="https://github.com/arvidn/libtorrent/archive/refs/tags/${LIBTORRENT_VERSION}.tar.gz"
 if [ ! -f "${DL_DIR}/libtorrent.tar.gz" ]; then
-	wget -c -O "${DL_DIR}/libtorrent.tar.gz" "${LIBTORRENT_DL_URL}"
+	wget -c -O "${DL_DIR}/libtorrent.tar.gz" "${LIBTORRENT_DL_URL}" || exit 1
 fi
 tar -zxf "${DL_DIR}/libtorrent.tar.gz" --strip-components=1 -C /usr/src/libtorrent
 
 #### Download toolchain ####
 if [ ! -f "${DL_DIR}/${CROSS_HOST}-cross.tgz" ]; then
-	wget -c -O "${DL_DIR}/${CROSS_HOST}-cross.tgz" "https://musl.cc/${CROSS_HOST}-cross.tgz"
+	wget -c -O "${DL_DIR}/${CROSS_HOST}-cross.tgz" "https://musl.cc/${CROSS_HOST}-cross.tgz" || exit 1
 fi
 tar -zxf "${DL_DIR}/${CROSS_HOST}-cross.tgz" --transform='s|^\./||S' --strip-components=1 -C "${CROSS_ROOT}"
 # mingw does not contains posix thread support: https://github.com/meganz/mingw-std-threads
 if [ "${TARGET_HOST}" = 'win' ]; then
 	if [ ! -f "${DL_DIR}/mingw-std-threads.tar.gz" ]; then
-		wget -c -O "${DL_DIR}/mingw-std-threads.tar.gz" "https://github.com/meganz/mingw-std-threads/archive/master.tar.gz"
+		wget -c -O "${DL_DIR}/mingw-std-threads.tar.gz" "https://github.com/meganz/mingw-std-threads/archive/master.tar.gz" || exit 1
 	fi
 	mkdir -p /usr/src/mingw-std-threads/
 	tar -zxf "${DL_DIR}/mingw-std-threads.tar.gz" --strip-components=1 -C "/usr/src/mingw-std-threads/"
@@ -109,7 +107,7 @@ fi
 #### Download zlib ####
 if [ ! -f "${DL_DIR}/zlib.tar.gz" ]; then
 	zlib_latest_url="$(wget -qO- https://api.github.com/repos/madler/zlib/tags | jq -r '.[0].tarball_url')"
-	wget -c -O "${DL_DIR}/zlib.tar.gz" "${zlib_latest_url}"
+	wget -c -O "${DL_DIR}/zlib.tar.gz" "${zlib_latest_url}" || exit 1
 fi
 tar -zxf "${DL_DIR}/zlib.tar.gz" --strip-components=1 -C /usr/src/zlib
 
@@ -117,7 +115,7 @@ tar -zxf "${DL_DIR}/zlib.tar.gz" --strip-components=1 -C /usr/src/zlib
 if [ ! -f "${DL_DIR}/openssl.tar.gz" ]; then
 	openssl_filename="$(wget -qO- https://www.openssl.org/source/ | grep -o 'href="openssl-1.*tar.gz"' | grep -o '[^"]*.tar.gz')"
 	openssl_latest_url="https://www.openssl.org/source/${openssl_filename}"
-	wget -c -O "${DL_DIR}/openssl.tar.gz" "${openssl_latest_url}"
+	wget -c -O "${DL_DIR}/openssl.tar.gz" "${openssl_latest_url}" || exit 1
 fi
 tar -zxf "${DL_DIR}/openssl.tar.gz" --strip-components=1 -C /usr/src/openssl
 
@@ -127,7 +125,7 @@ BOOST_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 
 if [ ! -f "${DL_DIR}/boost.tar.bz2" ]; then
 	boost_url="$(wget -qO- https://www.boost.org/users/download/ | grep -o 'http[^"]*.tar.bz2' | head -1)"
 	[ -z "$BOOST_VERSION" ] || boost_url="https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost_$(echo "${BOOST_VERSION}" | tr "." "_").tar.bz2"
-	wget -c -O "${DL_DIR}/boost.tar.bz2" "${boost_url}"
+	wget -c -O "${DL_DIR}/boost.tar.bz2" "${boost_url}" || exit 1
 fi
 tar -jxf "${DL_DIR}/boost.tar.bz2" --strip-components=1 -C /usr/src/boost
 
@@ -140,10 +138,10 @@ qtbase_filename="qtbase-everywhere-src-${qt_ver}.tar.xz"
 qttools_url="https://download.qt.io/official_releases/qt/${qt_major_ver}/${qt_ver}/submodules/qttools-everywhere-src-${qt_ver}.tar.xz"
 qttools_filename="qttools-everywhere-src-${qt_ver}.tar.xz"
 if [ ! -f "${DL_DIR}/${qtbase_filename}" ]; then
-	wget -c -O "${DL_DIR}/${qtbase_filename}" "${qtbase_url}"
+	wget -c -O "${DL_DIR}/${qtbase_filename}" "${qtbase_url}" || exit 1
 fi
 if [ ! -f "${DL_DIR}/${qttools_filename}" ]; then
-	wget -c -O "${DL_DIR}/${qttools_filename}" "${qttools_url}"
+	wget -c -O "${DL_DIR}/${qttools_filename}" "${qttools_url}" || exit 1
 fi
 tar -Jxf "${DL_DIR}/${qtbase_filename}" --strip-components=1 -C /usr/src/qtbase
 tar -Jxf "${DL_DIR}/${qttools_filename}" --strip-components=1 -C /usr/src/qttools
@@ -151,7 +149,7 @@ tar -Jxf "${DL_DIR}/${qttools_filename}" --strip-components=1 -C /usr/src/qttool
 #### Download libiconv ####
 if [ ! -f "${DL_DIR}/libiconv.tar.gz" ]; then
 	libiconv_latest_url="$(wget -qO- https://www.gnu.org/software/libiconv/ | grep -o '[^>< "]*ftp.gnu.org/pub/gnu/libiconv/.[^>< "]*' | head -1)"
-	wget -c -O "${DL_DIR}/libiconv.tar.gz" "${libiconv_latest_url}"
+	wget -c -O "${DL_DIR}/libiconv.tar.gz" "${libiconv_latest_url}" || exit 1
 fi
 tar -zxf "${DL_DIR}/libiconv.tar.gz" --strip-components=1 -C /usr/src/libiconv/
 
@@ -196,36 +194,6 @@ make install_sw
 cd /usr/src/boost
 ./bootstrap.sh
 sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.jam
-# - atomic
-# - chrono
-# - container
-# - context
-# - contract
-# - coroutine
-# - date_time
-# - exception
-# - fiber
-# - filesystem
-# - graph
-# - graph_parallel
-# - iostreams
-# - locale
-# - log
-# - math
-# - mpi
-# - program_options
-# - python
-# - random
-# - regex
-# - serialization
-# - signals
-# - stacktrace
-# - system
-# - test
-# - thread
-# - timer
-# - type_erasure
-# - wave
 [ -z "$BOOST_VERSION" ] || boost_with_libs=$(echo "$BOOST_VERSION" | awk -F'.' '{if ($1<=1 && $2<=68) {print "--with-chrono --with-random"}}')
 ./b2 install --prefix="${CROSS_PREFIX}" --with-system $boost_with_libs toolset=gcc-cross variant=release link=static runtime-link=static
 
@@ -308,6 +276,8 @@ if [ "${TARGET_HOST}" = 'win' ]; then
 else
  cp -fv "${CROSS_PREFIX}/bin/qbittorrent-nox" /tmp/
 fi
+# compression
+[ "$UPX_COMPRESSION" = "true" ] && upx --lzma --best /tmp/qbittorrent-nox
 
 # check
 "${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
