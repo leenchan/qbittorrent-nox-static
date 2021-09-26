@@ -50,7 +50,7 @@ jobs:
     container: "alpine:latest"
     strategy:
       fail-fast: false
-      cross_host: ["mips-linux-musln32sf", "mipsel-linux-musln32sf"]
+      cross_host: [mips-linux-musln32sf, mipsel-linux-musln32sf]
       matrix:
         include:
           # cross toolchain downloads from: https://musl.cc/
