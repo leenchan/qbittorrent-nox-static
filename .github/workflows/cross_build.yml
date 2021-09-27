@@ -34,7 +34,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: cross compile nox-static
-        run: sh cross_build.sh
+        run: sh cross_build.sh init
+      - name: cross compile nox-static
+        run: sh cross_build.sh download
       - uses: actions/upload-artifact@v2
         with:
           name: qbittorrent-nox_${{ matrix.build_target }}_static

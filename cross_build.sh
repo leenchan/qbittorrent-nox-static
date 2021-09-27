@@ -1,5 +1,7 @@
 #!/bin/sh -e
 
+CUR_DIR="$(dirname "$(readlink -f "${0}")")"
+
 case "$BUILD_TARGET" in
 "arm")
 	CROSS_HOST="arm-linux-musleabi"
@@ -41,21 +43,58 @@ case "$BUILD_TARGET" in
 	;;
 esac
 
-export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
-export CROSS_HOST="$CROSS_HOST"
-export OPENSSL_COMPILER="$OPENSSL_COMPILER"
-export QT_DEVICE="$QT_DEVICE"
-export QT_XPLATFORM="$QT_XPLATFORM"
-export QT_VER_PREFIX="${QT_VER_PREFIX:-5}"
-export LIBTORRENT_VERSION="$LIBTORRENT_VERSION"
-export QBITTORRENT_VERSION="$QBITTORRENT_VERSION"
-export PATH="${CROSS_ROOT}/bin:${PATH}"
-export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
-export PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
-SELF_DIR="$(dirname "$(readlink -f "${0}")")"
-DL_DIR="/tmp/download"
-[ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
+_init() {
+	export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
+	export CROSS_HOST="$CROSS_HOST"
+	export OPENSSL_COMPILER="$OPENSSL_COMPILER"
+	export QT_DEVICE="$QT_DEVICE"
+	export QT_XPLATFORM="$QT_XPLATFORM"
+	export QT_VER_PREFIX="${QT_VER_PREFIX:-5}"
+	export LIBTORRENT_VERSION="$LIBTORRENT_VERSION"
+	export QBITTORRENT_VERSION="$QBITTORRENT_VERSION"
+	export PATH="${CROSS_ROOT}/bin:${PATH}"
+	export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
+	export PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+	[ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
+	TARGET_ARCH="${CROSS_HOST%%-*}"
+	TARGET_HOST="${CROSS_HOST#*-}"
+	case "${TARGET_HOST}" in
+	*"mingw"*)
+		TARGET_HOST=win
+		# apk add wine
+		export WINEPREFIX=/tmp/
+		APK_RUNNER="wine"
+		RUNNER_CHECKER="wine64"
+		;;
+	*)
+		TARGET_HOST=linux
+		# apk add "qemu-${TARGET_ARCH}"
+		APK_RUNNER="qemu-${TARGET_ARCH}"
+		RUNNER_CHECKER="qemu-${TARGET_ARCH}"
+		;;
+	esac
+	export DL_DIR="/tmp/download"
+	echo "APK_RUNNER=$APK_RUNNER" >>$GITHUB_ENV
+	echo "DL_DIR=$DL_DIR" >>$GITHUB_ENV
+}
 
+_download() {
+	env
+	echo "APK_RUNNER: $APK_RUNNER"
+	echo "DL_DIR: $DL_DIR"
+	exit 1
+}
+
+case "$1" in
+"init")
+	_init
+	;;
+"download")
+	_download
+	;;
+esac
+
+exit 0
 apk add gcc \
 	g++ \
 	make \
@@ -72,23 +111,8 @@ apk add gcc \
 	xz \
 	curl \
 	upx \
-	aria2
-
-TARGET_ARCH="${CROSS_HOST%%-*}"
-TARGET_HOST="${CROSS_HOST#*-}"
-case "${TARGET_HOST}" in
-*"mingw"*)
-	TARGET_HOST=win
-	apk add wine
-	export WINEPREFIX=/tmp/
-	RUNNER_CHECKER="wine64"
-	;;
-*)
-	TARGET_HOST=linux
-	apk add "qemu-${TARGET_ARCH}"
-	RUNNER_CHECKER="qemu-${TARGET_ARCH}"
-	;;
-esac
+	aria2 \
+	$APK_RUNNER
 
 mkdir -p "${CROSS_ROOT}" \
 	${DL_DIR} \
@@ -329,4 +353,4 @@ echo "Checking qBittorrent Version ... (${RUNNER_CHECKER})"
 # echo "qt_ver: ${qt_ver}"
 
 # archive qbittorrent
-zip -j9v "${SELF_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox*
+zip -j9v "${CUR_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox*
