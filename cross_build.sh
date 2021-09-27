@@ -110,10 +110,8 @@ _download_file() {
 	aria2c -c -x 16 -d "${DL_DIR}" -o "$2" "$1" || exit 1
 }
 
+
 _download() {
-	env
-	exit 1
-	#==================== Download ====================
 	##### Download qbittorrent ####
 	QBITTORRENT_DL_URL="https://github.com/qbittorrent/qBittorrent/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
 	[ "$QBITTORRENT_ENHANCED" = "true" ] && QBITTORRENT_DL_URL="https://github.com/c0re100/qBittorrent-Enhanced-Edition/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
@@ -204,7 +202,7 @@ _download() {
 	fi
 	tar -zxf "${DL_DIR}/libiconv.tar.gz" --strip-components=1 -C /usr/src/libiconv/
 
-	#### Download End / Check ####
+	#### Check ####
 	rm -rf "${DL_DIR}"
 	while read DIR; do
 		echo "Checking /usr/src/$DIR"
