@@ -33,28 +33,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: cross compile nox-static
+      - name: Init
         run: sh cross_build.sh init
-      - name: cross compile nox-static
+      - name: Download
         run: sh cross_build.sh download
-      - uses: actions/upload-artifact@v2
-        with:
-          name: qbittorrent-nox_${{ matrix.build_target }}_static
-          path: |
-            /tmp/qbittorrent-nox*
-      - name: Upload Github Assets (Enhanced Edition)
-        if: ${{ env.QBITTORRENT_ENHANCED == 'true' }}
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: "qbittorrent-nox_${{ matrix.build_target }}_static.zip"
-          tag: v${{ env.QBITTORRENT_VERSION }}-enhanced
-          overwrite: true
-      - name: Upload Github Assets
-        if: ${{ env.QBITTORRENT_ENHANCED != 'true' }}
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: "qbittorrent-nox_${{ matrix.build_target }}_static.zip"
-          tag: v${{ env.QBITTORRENT_VERSION }}
-          overwrite: true
+      - name: Compile zlib
+        run: sh cross_build.sh compile zlib
+      - name: Compile openssl
+        run: sh cross_build.sh compile openssl
+      # - uses: actions/upload-artifact@v2
+      #   with:
+      #     name: qbittorrent-nox_${{ matrix.build_target }}_static
+      #     path: |
+      #       /tmp/qbittorrent-nox*
+      # - name: Upload Github Assets (Enhanced Edition)
+      #   if: ${{ env.QBITTORRENT_ENHANCED == 'true' }}
+      #   uses: svenstaro/upload-release-action@v2
+      #   with:
+      #     repo_token: ${{ secrets.GITHUB_TOKEN }}
+      #     file: "qbittorrent-nox_${{ matrix.build_target }}_static.zip"
+      #     tag: v${{ env.QBITTORRENT_VERSION }}-enhanced
+      #     overwrite: true
+      # - name: Upload Github Assets
+      #   if: ${{ env.QBITTORRENT_ENHANCED != 'true' }}
+      #   uses: svenstaro/upload-release-action@v2
+      #   with:
+      #     repo_token: ${{ secrets.GITHUB_TOKEN }}
+      #     file: "qbittorrent-nox_${{ matrix.build_target }}_static.zip"
+      #     tag: v${{ env.QBITTORRENT_VERSION }}
+      #     overwrite: true

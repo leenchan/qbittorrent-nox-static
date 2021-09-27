@@ -74,6 +74,10 @@ _init() {
 		PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 	EOF
 	[ -z "$QBITTORRENT_VERSION" ] && echo "QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')" >>$GITHUB_ENV
+	LIBTORRENT_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "libtorrent-1_1_14"}}')
+	[ -z "$LIBTORRENT_VERSION_MAX" ] || echo "LIBTORRENT_VERSION=${LIBTORRENT_VERSION_MAX}" >>$GITHUB_ENV
+	BOOST_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "1.68.0"}}')
+	[ -z "$BOOST_VERSION_MAX" ] || echo "BOOST_VERSION=${BOOST_VERSION_MAX}" >>$GITHUB_ENV
 
 	mkdir -p "${CROSS_ROOT}" \
 		${DL_DIR} \
@@ -110,7 +114,6 @@ _download_file() {
 	aria2c -c -x 16 -d "${DL_DIR}" -o "$2" "$1" || exit 1
 }
 
-
 _download() {
 	##### Download qbittorrent ####
 	QBITTORRENT_DL_URL="https://github.com/qbittorrent/qBittorrent/archive/refs/tags/release-${QBITTORRENT_VERSION}.tar.gz"
@@ -120,8 +123,6 @@ _download() {
 	tar -zxf "${DL_DIR}/release-${QBITTORRENT_VERSION}.tar.gz" --strip-components=1 -C /usr/src/qbittorrent
 
 	#### Download libtorrent
-	LIBTORRENT_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "libtorrent-1_1_14"}}')
-	[ -z "$LIBTORRENT_VERSION_MAX" ] || LIBTORRENT_VERSION="${LIBTORRENT_VERSION_MAX}"
 	LIBTORRENT_DL_URL="https://github.com/arvidn/libtorrent/archive/RC_1_2.tar.gz"
 	[ -z "$LIBTORRENT_VERSION" ] || LIBTORRENT_DL_URL="https://github.com/arvidn/libtorrent/archive/refs/tags/${LIBTORRENT_VERSION}.tar.gz"
 	if [ ! -f "${DL_DIR}/libtorrent.tar.gz" ]; then
@@ -165,8 +166,6 @@ _download() {
 	tar -zxf "${DL_DIR}/openssl.tar.gz" --strip-components=1 -C /usr/src/openssl
 
 	#### Download boost ####
-	BOOST_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "1.68.0"}}')
-	[ -z "$BOOST_VERSION_MAX" ] || BOOST_VERSION="${BOOST_VERSION_MAX}"
 	if [ ! -f "${DL_DIR}/boost.tar.bz2" ]; then
 		boost_url="$(curl -skL https://www.boost.org/users/download/ | grep -o 'http[^"]*.tar.bz2' | head -1)"
 		[ -z "$BOOST_VERSION" ] || boost_url="https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost_$(echo "${BOOST_VERSION}" | tr "." "_").tar.bz2"
@@ -216,6 +215,128 @@ _download() {
 	EOF
 }
 
+_compile() {
+	case "$1" in
+	"zlib")
+		#### Compile zlib ####
+		cd /usr/src/zlib
+		if [ "${TARGET_HOST}" = win ]; then
+			make -f win32/Makefile.gcc BINARY_PATH="${CROSS_PREFIX}/bin" INCLUDE_PATH="${CROSS_PREFIX}/include" LIBRARY_PATH="${CROSS_PREFIX}/lib" SHARED_MODE=0 PREFIX="${CROSS_HOST}-" -j$(nproc) install
+		else
+			CHOST="${CROSS_HOST}" ./configure --prefix="${CROSS_PREFIX}" --static
+			make -j$(nproc) || exit 1
+			make install
+		fi
+		;;
+	"openssl")
+		#### Compile openssl ####
+		cd /usr/src/openssl
+		./Configure -static --cross-compile-prefix="${CROSS_HOST}-" --prefix="${CROSS_PREFIX}" "${OPENSSL_COMPILER}"
+		make depend || exit 1
+		make -j$(nproc) || exit 1
+		make install_sw
+		;;
+	"boost")
+		#### Compile boost ####
+		cd /usr/src/boost
+		./bootstrap.sh || exit 1
+		sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.jam
+		[ -z "$BOOST_VERSION" ] || boost_with_libs=$(echo "$BOOST_VERSION" | awk -F'.' '{if ($1<=1 && $2<=68) {print "--with-chrono --with-random"}}')
+		./b2 install --prefix="${CROSS_PREFIX}" --with-system $boost_with_libs toolset=gcc-cross variant=release link=static runtime-link=static || exit 1
+		;;
+	"qt")
+		#### Compile qt ####
+		cd /usr/src/qtbase
+		# Remove some options no support by this toolchain
+		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fno-fat-lto-objects//g'
+		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fuse-linker-plugin//g'
+		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-mfloat-abi=softfp//g'
+		if [ "${TARGET_HOST}" = 'win' ]; then
+			export OPENSSL_LIBS="-lssl -lcrypto -lcrypt32 -lws2_32"
+			# musl.cc x86_64-w64-mingw32 toolchain not supports thread local
+			sed -i '/define\s*Q_COMPILER_THREAD_LOCAL/d' src/corelib/global/qcompilerdetection.h
+		fi
+		./configure --prefix=/opt/qt/ -optimize-size -silent --openssl-linked \
+			-static -opensource -confirm-license -release -c++std c++17 -no-opengl \
+			-no-dbus -no-widgets -no-gui -no-compile-examples -ltcg -make libs -no-pch \
+			-nomake tests -nomake examples -no-xcb -no-feature-testlib \
+			-hostprefix "${CROSS_ROOT}" ${QT_XPLATFORM:+-xplatform "${QT_XPLATFORM}"} \
+			${QT_DEVICE:+-device "${QT_DEVICE}"} -device-option CROSS_COMPILE="${CROSS_HOST}-" \
+			-sysroot "${CROSS_PREFIX}"
+		make -j$(nproc)
+		make install
+		cd /usr/src/qttools
+		qmake -set prefix "${CROSS_ROOT}"
+		qmake
+		# Remove some options no support by this toolchain
+		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fno-fat-lto-objects//g'
+		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fuse-linker-plugin//g'
+		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-mfloat-abi=softfp//g'
+		make -j$(nproc) install
+		cd "${CROSS_ROOT}/bin"
+		ln -sf lrelease "lrelease-qt$(echo "${qt_ver}" | grep -Eo "^[1-9]")"
+		;;
+	"libiconv")
+		#### Compile libiconv ####
+		cd /usr/src/libiconv/
+		./configure CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules
+		make -j$(nproc)
+		make install
+		;;
+	"libqbittorrent")
+		#### Compile libtorrent ####
+		cd /usr/src/libtorrent
+		if [ "${TARGET_HOST}" = 'win' ]; then
+			export LIBS="-lcrypt32 -lws2_32"
+			# musl.cc x86_64-w64-mingw32 toolchain not supports thread local
+			export CPPFLAGS='-D_WIN32_WINNT=0x0602 -DBOOST_NO_CXX11_THREAD_LOCAL'
+		fi
+		./bootstrap.sh CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules --with-boost="${CROSS_PREFIX}" --with-libiconv
+		# fix x86_64-w64-mingw32 build
+		if [ "${TARGET_HOST}" = 'win' ]; then
+			find -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 |
+				xargs -0 -r sed -i 's/include\s*<condition_variable>/include "mingw.condition_variable.h"/g;
+														s/include\s*<future>/include "mingw.future.h"/g;
+														s/include\s*<invoke>/include "mingw.invoke.h"/g;
+														s/include\s*<mutex>/include "mingw.mutex.h"/g;
+														s/include\s*<shared_mutex>/include "mingw.shared_mutex.h"/g;
+														s/include\s*<thread>/include "mingw.thread.h"/g'
+		fi
+		make -j$(nproc) || exit 1
+		make install
+		unset LIBS CPPFLAGS
+		;;
+	"qbittorrent")
+		#### Compile qbittorrent ####
+		cd /usr/src/qbittorrent
+		if [ "${TARGET_HOST}" = 'win' ]; then
+			find \( -name '*.cpp' -o -name '*.h' \) -type f -print0 |
+				xargs -0 -r sed -i 's/Windows\.h/windows.h/g;
+					s/Shellapi\.h/shellapi.h/g;
+					s/Shlobj\.h/shlobj.h/g;
+					s/Ntsecapi\.h/ntsecapi.h/g'
+			export LIBS="-lmswsock"
+			export CPPFLAGS='-std=c++17 -D_WIN32_WINNT=0x0602'
+		fi
+		LIBS="${LIBS} -liconv" ./configure --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --disable-gui --with-boost="${CROSS_PREFIX}" CXXFLAGS="-std=c++17 ${CPPFLAGS}" LDFLAGS='-s -static --static'
+		make -j$(nproc)
+		make install
+		unset LIBS CPPFLAGS
+		if [ "${TARGET_HOST}" = 'win' ]; then
+			cp -fv "src/release/qbittorrent-nox.exe" /tmp/
+		else
+			cp -fv "${CROSS_PREFIX}/bin/qbittorrent-nox" /tmp/
+		fi
+		# compression
+		[ "$UPX_COMPRESSION" = "true" ] && upx --lzma --best /tmp/qbittorrent-nox
+		# check qbittorrent version
+		echo "Checking qBittorrent Version ... (${RUNNER_CHECKER})"
+		"${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
+		zip -j9v "${CUR_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox*
+		;;
+	esac
+}
+
 [ -z "$CROSS_ROOT" ] || export PATH="${CROSS_ROOT}/bin:${PATH}"
 
 case "$1" in
@@ -225,129 +346,9 @@ case "$1" in
 "download")
 	_download
 	;;
+"compile" | "c")
+	_compile "$2"
+	;;
 esac
 
 exit 0
-
-#==================== Compile ====================
-#### List boost library ####
-# cd /usr/src/boost
-# ./bootstrap.sh
-# sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.jam
-# ./b2 --show-libraries
-# exit 1
-
-#### Compile zlib ####
-cd /usr/src/zlib
-if [ "${TARGET_HOST}" = win ]; then
-	make -f win32/Makefile.gcc BINARY_PATH="${CROSS_PREFIX}/bin" INCLUDE_PATH="${CROSS_PREFIX}/include" LIBRARY_PATH="${CROSS_PREFIX}/lib" SHARED_MODE=0 PREFIX="${CROSS_HOST}-" -j$(nproc) install
-else
-	CHOST="${CROSS_HOST}" ./configure --prefix="${CROSS_PREFIX}" --static
-	make -j$(nproc)
-	make install
-fi
-
-#### Compile openssl ####
-cd /usr/src/openssl
-./Configure -static --cross-compile-prefix="${CROSS_HOST}-" --prefix="${CROSS_PREFIX}" "${OPENSSL_COMPILER}"
-make depend
-make -j$(nproc)
-make install_sw
-
-#### Compile boost ####
-cd /usr/src/boost
-./bootstrap.sh
-sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.jam
-[ -z "$BOOST_VERSION" ] || boost_with_libs=$(echo "$BOOST_VERSION" | awk -F'.' '{if ($1<=1 && $2<=68) {print "--with-chrono --with-random"}}')
-./b2 install --prefix="${CROSS_PREFIX}" --with-system $boost_with_libs toolset=gcc-cross variant=release link=static runtime-link=static
-
-#### Compile qt ####
-cd /usr/src/qtbase
-# Remove some options no support by this toolchain
-find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fno-fat-lto-objects//g'
-find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fuse-linker-plugin//g'
-find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-mfloat-abi=softfp//g'
-if [ "${TARGET_HOST}" = 'win' ]; then
-	export OPENSSL_LIBS="-lssl -lcrypto -lcrypt32 -lws2_32"
-	# musl.cc x86_64-w64-mingw32 toolchain not supports thread local
-	sed -i '/define\s*Q_COMPILER_THREAD_LOCAL/d' src/corelib/global/qcompilerdetection.h
-fi
-./configure --prefix=/opt/qt/ -optimize-size -silent --openssl-linked \
-	-static -opensource -confirm-license -release -c++std c++17 -no-opengl \
-	-no-dbus -no-widgets -no-gui -no-compile-examples -ltcg -make libs -no-pch \
-	-nomake tests -nomake examples -no-xcb -no-feature-testlib \
-	-hostprefix "${CROSS_ROOT}" ${QT_XPLATFORM:+-xplatform "${QT_XPLATFORM}"} \
-	${QT_DEVICE:+-device "${QT_DEVICE}"} -device-option CROSS_COMPILE="${CROSS_HOST}-" \
-	-sysroot "${CROSS_PREFIX}"
-make -j$(nproc)
-make install
-cd /usr/src/qttools
-qmake -set prefix "${CROSS_ROOT}"
-qmake
-# Remove some options no support by this toolchain
-find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fno-fat-lto-objects//g'
-find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fuse-linker-plugin//g'
-find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-mfloat-abi=softfp//g'
-make -j$(nproc) install
-cd "${CROSS_ROOT}/bin"
-ln -sf lrelease "lrelease-qt$(echo "${qt_ver}" | grep -Eo "^[1-9]")"
-
-#### Compile libiconv ####
-cd /usr/src/libiconv/
-./configure CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules
-make -j$(nproc)
-make install
-
-#### Compile libtorrent ####
-cd /usr/src/libtorrent
-if [ "${TARGET_HOST}" = 'win' ]; then
-	export LIBS="-lcrypt32 -lws2_32"
-	# musl.cc x86_64-w64-mingw32 toolchain not supports thread local
-	export CPPFLAGS='-D_WIN32_WINNT=0x0602 -DBOOST_NO_CXX11_THREAD_LOCAL'
-fi
-./bootstrap.sh CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules --with-boost="${CROSS_PREFIX}" --with-libiconv
-# fix x86_64-w64-mingw32 build
-if [ "${TARGET_HOST}" = 'win' ]; then
-	find -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 |
-		xargs -0 -r sed -i 's/include\s*<condition_variable>/include "mingw.condition_variable.h"/g;
-                        s/include\s*<future>/include "mingw.future.h"/g;
-                        s/include\s*<invoke>/include "mingw.invoke.h"/g;
-                        s/include\s*<mutex>/include "mingw.mutex.h"/g;
-                        s/include\s*<shared_mutex>/include "mingw.shared_mutex.h"/g;
-                        s/include\s*<thread>/include "mingw.thread.h"/g'
-fi
-make -j$(nproc) || exit 1
-make install
-unset LIBS CPPFLAGS
-
-#### Compile qbittorrent ####
-cd /usr/src/qbittorrent
-if [ "${TARGET_HOST}" = 'win' ]; then
-	find \( -name '*.cpp' -o -name '*.h' \) -type f -print0 |
-		xargs -0 -r sed -i 's/Windows\.h/windows.h/g;
-      s/Shellapi\.h/shellapi.h/g;
-      s/Shlobj\.h/shlobj.h/g;
-      s/Ntsecapi\.h/ntsecapi.h/g'
-	export LIBS="-lmswsock"
-	export CPPFLAGS='-std=c++17 -D_WIN32_WINNT=0x0602'
-fi
-LIBS="${LIBS} -liconv" ./configure --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --disable-gui --with-boost="${CROSS_PREFIX}" CXXFLAGS="-std=c++17 ${CPPFLAGS}" LDFLAGS='-s -static --static'
-make -j$(nproc)
-make install
-unset LIBS CPPFLAGS
-if [ "${TARGET_HOST}" = 'win' ]; then
-	cp -fv "src/release/qbittorrent-nox.exe" /tmp/
-else
-	cp -fv "${CROSS_PREFIX}/bin/qbittorrent-nox" /tmp/
-fi
-# compression
-[ "$UPX_COMPRESSION" = "true" ] && upx --lzma --best /tmp/qbittorrent-nox
-
-# check qbittorrent version
-echo "Checking qBittorrent Version ... (${RUNNER_CHECKER})"
-"${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
-# ls -al "${CROSS_ROOT}/bin"
-# echo "qt_ver: ${qt_ver}"
-
-# archive qbittorrent
-zip -j9v "${CUR_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox*
