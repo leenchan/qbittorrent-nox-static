@@ -60,22 +60,54 @@ _init() {
 	TARGET_HOST="${CROSS_HOST#*-}"
 	case "${TARGET_HOST}" in
 	*"mingw"*)
-		TARGET_HOST=win
+		TARGET_HOST="win"
 		# apk add wine
 		export WINEPREFIX=/tmp/
 		APK_RUNNER="wine"
 		RUNNER_CHECKER="wine64"
 		;;
 	*)
-		TARGET_HOST=linux
+		TARGET_HOST="linux"
 		# apk add "qemu-${TARGET_ARCH}"
 		APK_RUNNER="qemu-${TARGET_ARCH}"
 		RUNNER_CHECKER="qemu-${TARGET_ARCH}"
 		;;
 	esac
-	export DL_DIR="/tmp/download"
-	echo "APK_RUNNER=$APK_RUNNER" >>$GITHUB_ENV
-	echo "DL_DIR=$DL_DIR" >>$GITHUB_ENV
+	cat <<-EOF >>$GITHUB_ENV
+		TARGET_HOST=$TARGET_HOST
+		APK_RUNNER=$APK_RUNNER
+		DL_DIR=$DL_DIR
+	EOF
+
+	# mkdir -p "${CROSS_ROOT}" \
+	# 	${DL_DIR} \
+	# 	/usr/src/zlib \
+	# 	/usr/src/openssl \
+	# 	/usr/src/boost \
+	# 	/usr/src/libiconv \
+	# 	/usr/src/libtorrent \
+	# 	/usr/src/qtbase \
+	# 	/usr/src/qttools \
+	# 	/usr/src/qbittorrent
+
+	# apk add gcc \
+	# 	g++ \
+	# 	make \
+	# 	file \
+	# 	perl \
+	# 	autoconf \
+	# 	automake \
+	# 	libtool \
+	# 	tar \
+	# 	jq \
+	# 	pkgconfig \
+	# 	linux-headers \
+	# 	zip \
+	# 	xz \
+	# 	curl \
+	# 	upx \
+	# 	aria2 \
+	# 	$APK_RUNNER
 }
 
 _download() {
@@ -86,7 +118,7 @@ _download() {
 }
 
 case "$1" in
-"init")
+"init"
 	_init
 	;;
 "download")
@@ -95,35 +127,6 @@ case "$1" in
 esac
 
 exit 0
-apk add gcc \
-	g++ \
-	make \
-	file \
-	perl \
-	autoconf \
-	automake \
-	libtool \
-	tar \
-	jq \
-	pkgconfig \
-	linux-headers \
-	zip \
-	xz \
-	curl \
-	upx \
-	aria2 \
-	$APK_RUNNER
-
-mkdir -p "${CROSS_ROOT}" \
-	${DL_DIR} \
-	/usr/src/zlib \
-	/usr/src/openssl \
-	/usr/src/boost \
-	/usr/src/libiconv \
-	/usr/src/libtorrent \
-	/usr/src/qtbase \
-	/usr/src/qttools \
-	/usr/src/qbittorrent
 
 #==================== Download ====================
 dl_file() {
