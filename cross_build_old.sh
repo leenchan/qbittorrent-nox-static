@@ -4,32 +4,32 @@ case "$BUILD_TARGET" in
 "arm")
 	CROSS_HOST="arm-linux-musleabi"
 	OPENSSL_COMPILER="linux-armv4"
-	QT_DEVICE: "linux-arm-generic-g++"
+	QT_DEVICE="linux-arm-generic-g++"
 	;;
 "aarch64")
 	CROSS_HOST="aarch64-linux-musl"
 	OPENSSL_COMPILER="linux-aarch64"
-	QT_DEVICE: "linux-arm-generic-g++"
+	QT_DEVICE="linux-arm-generic-g++"
 	;;
 "mips")
 	CROSS_HOST="mips-linux-musln32sf"
 	OPENSSL_COMPILER="linux-mips32"
-	QT_DEVICE: "linux-generic-g++"
+	QT_DEVICE="linux-generic-g++"
 	;;
 "mipsel")
 	CROSS_HOST="mipsel-linux-musln32sf"
 	OPENSSL_COMPILER="linux-mips32"
-	QT_DEVICE: "linux-generic-g++"
+	QT_DEVICE="linux-generic-g++"
 	;;
 "mips64")
 	CROSS_HOST="mips64-linux-musl"
 	OPENSSL_COMPILER="linux64-mips64"
-	QT_DEVICE: "linux-generic-g++"
+	QT_DEVICE="linux-generic-g++"
 	;;
 "x86_64")
 	CROSS_HOST="x86_64-linux-musl"
 	OPENSSL_COMPILER="linux-x86_64"
-	QT_DEVICE: "linux-generic-g++"
+	QT_DEVICE="linux-generic-g++"
 	;;
 "win32")
 	CROSS_HOST="x86_64-w64-mingw32"
