@@ -70,8 +70,8 @@ _init() {
 		TARGET_HOST=$TARGET_HOST
 		APK_RUNNER=$APK_RUNNER
 		RUNNER_CHECKER=$RUNNER_CHECKER
-		CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
-		PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+		CROSS_PREFIX=${CROSS_ROOT}/${CROSS_HOST}
+		PKG_CONFIG_PATH=${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}
 	EOF
 	[ -z "$QBITTORRENT_VERSION" ] && echo "QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')" >>$GITHUB_ENV
 	LIBTORRENT_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "libtorrent-1_1_14"}}')
