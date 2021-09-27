@@ -118,7 +118,7 @@ _download() {
 }
 
 case "$1" in
-"init"
+"init")
 	_init
 	;;
 "download")
