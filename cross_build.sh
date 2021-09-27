@@ -244,8 +244,8 @@ _compile() {
 		[ -z "$BOOST_VERSION" ] || boost_with_libs=$(echo "$BOOST_VERSION" | awk -F'.' '{if ($1<=1 && $2<=68) {print "--with-chrono --with-random"}}')
 		./b2 install --prefix="${CROSS_PREFIX}" --with-system $boost_with_libs toolset=gcc-cross variant=release link=static runtime-link=static || exit 1
 		;;
-	"qt")
-		#### Compile qt ####
+	"qtbase")
+		#### Compile qtbase ####
 		cd /usr/src/qtbase
 		# Remove some options no support by this toolchain
 		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fno-fat-lto-objects//g'
@@ -262,12 +262,15 @@ _compile() {
 			-nomake tests -nomake examples -no-xcb -no-feature-testlib \
 			-hostprefix "${CROSS_ROOT}" ${QT_XPLATFORM:+-xplatform "${QT_XPLATFORM}"} \
 			${QT_DEVICE:+-device "${QT_DEVICE}"} -device-option CROSS_COMPILE="${CROSS_HOST}-" \
-			-sysroot "${CROSS_PREFIX}"
-		make -j$(nproc)
+			-sysroot "${CROSS_PREFIX}" || exit 1
+		make -j$(nproc) || exit 1
 		make install
+		;;
+	"qttools")
+		#### Compile qttools ####
 		cd /usr/src/qttools
 		qmake -set prefix "${CROSS_ROOT}"
-		qmake
+		qmake || exit 1
 		# Remove some options no support by this toolchain
 		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fno-fat-lto-objects//g'
 		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fuse-linker-plugin//g'
@@ -279,11 +282,11 @@ _compile() {
 	"libiconv")
 		#### Compile libiconv ####
 		cd /usr/src/libiconv/
-		./configure CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules
-		make -j$(nproc)
+		./configure CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules || exit 1
+		make -j$(nproc) || exit 1
 		make install
 		;;
-	"libqbittorrent")
+	"libtorrent")
 		#### Compile libtorrent ####
 		cd /usr/src/libtorrent
 		if [ "${TARGET_HOST}" = 'win' ]; then
@@ -318,8 +321,8 @@ _compile() {
 			export LIBS="-lmswsock"
 			export CPPFLAGS='-std=c++17 -D_WIN32_WINNT=0x0602'
 		fi
-		LIBS="${LIBS} -liconv" ./configure --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --disable-gui --with-boost="${CROSS_PREFIX}" CXXFLAGS="-std=c++17 ${CPPFLAGS}" LDFLAGS='-s -static --static'
-		make -j$(nproc)
+		LIBS="${LIBS} -liconv" ./configure --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --disable-gui --with-boost="${CROSS_PREFIX}" CXXFLAGS="-std=c++17 ${CPPFLAGS}" LDFLAGS='-s -static --static'  || exit 1
+		make -j$(nproc) || exit 1
 		make install
 		unset LIBS CPPFLAGS
 		if [ "${TARGET_HOST}" = 'win' ]; then

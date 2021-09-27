@@ -37,10 +37,22 @@ jobs:
         run: sh cross_build.sh init
       - name: Download
         run: sh cross_build.sh download
-      - name: Compile zlib
+      - name: Compile zlib (1/8)
         run: sh cross_build.sh compile zlib
-      - name: Compile openssl
+      - name: Compile openssl (2/8)
         run: sh cross_build.sh compile openssl
+      - name: Compile boost (3/8)
+        run: sh cross_build.sh compile boost
+      - name: Compile qtbase (4/8)
+        run: sh cross_build.sh compile qtbase
+      - name: Compile qttools (5/8)
+        run: sh cross_build.sh compile qttools
+      - name: Compile libiconv (6/8)
+        run: sh cross_build.sh compile libiconv
+      - name: Compile libtorrent (7/8)
+        run: sh cross_build.sh compile libtorrent
+      - name: Compile qbittorrent (8/8)
+        run: sh cross_build.sh compile qbittorrent
       # - uses: actions/upload-artifact@v2
       #   with:
       #     name: qbittorrent-nox_${{ matrix.build_target }}_static
