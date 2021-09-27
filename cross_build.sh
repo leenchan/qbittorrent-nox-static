@@ -177,6 +177,7 @@ _download() {
 	#### Download qt ####
 	qt_major_ver="$(curl -skL https://download.qt.io/official_releases/qt/ | sed -nr 's@.*href="([0-9]+(\.[0-9]+)*)/".*@\1@p' | grep "^${QT_VER_PREFIX}" | head -1)"
 	qt_ver="$(curl -skL https://download.qt.io/official_releases/qt/${qt_major_ver}/ | sed -nr 's@.*href="([0-9]+(\.[0-9]+)*)/".*@\1@p' | grep "^${QT_VER_PREFIX}" | head -1)"
+	echo "qt_ver=$qt_ver" >>$GITHUB_ENV
 	echo "Using qt version: ${qt_ver}"
 	qtbase_url="https://download.qt.io/official_releases/qt/${qt_major_ver}/${qt_ver}/submodules/qtbase-everywhere-src-${qt_ver}.tar.xz"
 	qtbase_filename="qtbase-everywhere-src-${qt_ver}.tar.xz"
@@ -224,7 +225,7 @@ _compile() {
 			make -f win32/Makefile.gcc BINARY_PATH="${CROSS_PREFIX}/bin" INCLUDE_PATH="${CROSS_PREFIX}/include" LIBRARY_PATH="${CROSS_PREFIX}/lib" SHARED_MODE=0 PREFIX="${CROSS_HOST}-" -j$(nproc) install
 		else
 			CHOST="${CROSS_HOST}" ./configure --prefix="${CROSS_PREFIX}" --static
-			make -j$(nproc) || exit 1
+			make -j$(nproc)
 			make install
 		fi
 		;;
@@ -232,17 +233,17 @@ _compile() {
 		#### Compile openssl ####
 		cd /usr/src/openssl
 		./Configure -static --cross-compile-prefix="${CROSS_HOST}-" --prefix="${CROSS_PREFIX}" "${OPENSSL_COMPILER}"
-		make depend || exit 1
-		make -j$(nproc) || exit 1
+		make depend
+		make -j$(nproc)
 		make install_sw
 		;;
 	"boost")
 		#### Compile boost ####
 		cd /usr/src/boost
-		./bootstrap.sh || exit 1
+		./bootstrap.sh
 		sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.jam
 		[ -z "$BOOST_VERSION" ] || boost_with_libs=$(echo "$BOOST_VERSION" | awk -F'.' '{if ($1<=1 && $2<=68) {print "--with-chrono --with-random"}}')
-		./b2 install --prefix="${CROSS_PREFIX}" --with-system $boost_with_libs toolset=gcc-cross variant=release link=static runtime-link=static || exit 1
+		./b2 install --prefix="${CROSS_PREFIX}" --with-system $boost_with_libs toolset=gcc-cross variant=release link=static runtime-link=static
 		;;
 	"qtbase")
 		#### Compile qtbase ####
@@ -262,15 +263,15 @@ _compile() {
 			-nomake tests -nomake examples -no-xcb -no-feature-testlib \
 			-hostprefix "${CROSS_ROOT}" ${QT_XPLATFORM:+-xplatform "${QT_XPLATFORM}"} \
 			${QT_DEVICE:+-device "${QT_DEVICE}"} -device-option CROSS_COMPILE="${CROSS_HOST}-" \
-			-sysroot "${CROSS_PREFIX}" || exit 1
-		make -j$(nproc) || exit 1
+			-sysroot "${CROSS_PREFIX}"
+		make -j$(nproc)
 		make install
 		;;
 	"qttools")
 		#### Compile qttools ####
 		cd /usr/src/qttools
 		qmake -set prefix "${CROSS_ROOT}"
-		qmake || exit 1
+		qmake
 		# Remove some options no support by this toolchain
 		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fno-fat-lto-objects//g'
 		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fuse-linker-plugin//g'
@@ -282,8 +283,8 @@ _compile() {
 	"libiconv")
 		#### Compile libiconv ####
 		cd /usr/src/libiconv/
-		./configure CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules || exit 1
-		make -j$(nproc) || exit 1
+		./configure CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules
+		make -j$(nproc)
 		make install
 		;;
 	"libtorrent")
@@ -305,7 +306,7 @@ _compile() {
 														s/include\s*<shared_mutex>/include "mingw.shared_mutex.h"/g;
 														s/include\s*<thread>/include "mingw.thread.h"/g'
 		fi
-		make -j$(nproc) || exit 1
+		make -j$(nproc)
 		make install
 		unset LIBS CPPFLAGS
 		;;
@@ -321,8 +322,8 @@ _compile() {
 			export LIBS="-lmswsock"
 			export CPPFLAGS='-std=c++17 -D_WIN32_WINNT=0x0602'
 		fi
-		LIBS="${LIBS} -liconv" ./configure --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --disable-gui --with-boost="${CROSS_PREFIX}" CXXFLAGS="-std=c++17 ${CPPFLAGS}" LDFLAGS='-s -static --static'  || exit 1
-		make -j$(nproc) || exit 1
+		LIBS="${LIBS} -liconv" ./configure --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --disable-gui --with-boost="${CROSS_PREFIX}" CXXFLAGS="-std=c++17 ${CPPFLAGS}" LDFLAGS='-s -static --static'
+		make -j$(nproc)
 		make install
 		unset LIBS CPPFLAGS
 		if [ "${TARGET_HOST}" = 'win' ]; then
