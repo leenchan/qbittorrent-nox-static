@@ -177,7 +177,6 @@ _download() {
 	#### Download qt ####
 	qt_major_ver="$(curl -skL https://download.qt.io/official_releases/qt/ | sed -nr 's@.*href="([0-9]+(\.[0-9]+)*)/".*@\1@p' | grep "^${QT_VER_PREFIX}" | head -1)"
 	qt_ver="$(curl -skL https://download.qt.io/official_releases/qt/${qt_major_ver}/ | sed -nr 's@.*href="([0-9]+(\.[0-9]+)*)/".*@\1@p' | grep "^${QT_VER_PREFIX}" | head -1)"
-	echo "qt_ver=$qt_ver" >>$GITHUB_ENV
 	echo "Using qt version: ${qt_ver}"
 	qtbase_url="https://download.qt.io/official_releases/qt/${qt_major_ver}/${qt_ver}/submodules/qtbase-everywhere-src-${qt_ver}.tar.xz"
 	qtbase_filename="qtbase-everywhere-src-${qt_ver}.tar.xz"
@@ -217,6 +216,12 @@ _download() {
 }
 
 _compile() {
+	export CROSS_HOST="${CROSS_HOST}"
+	export CROSS_PREFIX="${CROSS_PREFIX}"
+	export TARGET_HOST="${TARGET_HOST}"
+	export OPENSSL_COMPILER="${OPENSSL_COMPILER}"
+	export QT_DEVICE="${QT_DEVICE}"
+	export PATH="${CROSS_ROOT}/bin:${PATH}" 
 	case "$1" in
 	"zlib")
 		#### Compile zlib ####
@@ -242,7 +247,7 @@ _compile() {
 		cd /usr/src/boost
 		./bootstrap.sh
 		sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.jam
-		[ -z "$BOOST_VERSION" ] || boost_with_libs=$(echo "$BOOST_VERSION" | awk -F'.' '{if ($1<=1 && $2<=68) {print "--with-chrono --with-random"}}')
+		[ -z "$BOOST_VERSION" ] || boost_with_libs=$(echo "${BOOST_VERSION}" | awk -F'.' '{if ($1<=1 && $2<=68) {print "--with-chrono --with-random"}}')
 		./b2 install --prefix="${CROSS_PREFIX}" --with-system $boost_with_libs toolset=gcc-cross variant=release link=static runtime-link=static
 		;;
 	"qtbase")
@@ -278,7 +283,7 @@ _compile() {
 		find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-mfloat-abi=softfp//g'
 		make -j$(nproc) install
 		cd "${CROSS_ROOT}/bin"
-		ln -sf lrelease "lrelease-qt$(echo "${qt_ver}" | grep -Eo "^[1-9]")"
+		ln -sf lrelease "lrelease-qt$(echo "${QT_VER_PREFIX}" | grep -Eo "^[1-9]")"
 		;;
 	"libiconv")
 		#### Compile libiconv ####
@@ -340,8 +345,6 @@ _compile() {
 		;;
 	esac
 }
-
-[ -z "$CROSS_ROOT" ] || export PATH="${CROSS_ROOT}/bin:${PATH}"
 
 case "$1" in
 "init")
