@@ -231,18 +231,26 @@ _compile() {
 	# echo "QBITTORRENT_VERSION: $QBITTORRENT_VERSION"
 	# echo "CROSS_PREFIX: $CROSS_PREFIX"
 	# echo "PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
-	export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
+
+	# export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
+	# export CROSS_HOST="$CROSS_HOST"
+	# export OPENSSL_COMPILER="$OPENSSL_COMPILER"
+	# export QT_DEVICE="$QT_DEVICE"
+	# export QT_XPLATFORM="$QT_XPLATFORM"
+	# export QT_VER_PREFIX="${QT_VER_PREFIX:-5}"
+	# export LIBTORRENT_VERSION="$LIBTORRENT_VERSION"
+	# export QBITTORRENT_VERSION="$QBITTORRENT_VERSION"
+	# export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
+	# export PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+	# [ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
+	# export PATH="${CROSS_ROOT}/bin:${PATH}"
+
+	export CROSS_ROOT="$CROSS_ROOT"
 	export CROSS_HOST="$CROSS_HOST"
-	export OPENSSL_COMPILER="$OPENSSL_COMPILER"
-	export QT_DEVICE="$QT_DEVICE"
-	export QT_XPLATFORM="$QT_XPLATFORM"
-	export QT_VER_PREFIX="${QT_VER_PREFIX:-5}"
-	export LIBTORRENT_VERSION="$LIBTORRENT_VERSION"
-	export QBITTORRENT_VERSION="$QBITTORRENT_VERSION"
 	export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
-	export PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
-	[ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
+	export TARGET_HOST="$TARGET_HOST"
 	export PATH="${CROSS_ROOT}/bin:${PATH}"
+	export QT_VER_PREFIX="$QT_VER_PREFIX"
 	case "$1" in
 	"zlib")
 		#### Compile zlib ####
