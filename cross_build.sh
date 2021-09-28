@@ -355,6 +355,7 @@ case "$1" in
 	;;
 "compile" | "c")
 	# _compile "$2"
+	export PATH="${CROSS_ROOT}/bin:${PATH}"
 	#### Compile zlib ####
 	cd /usr/src/zlib
 	if [ "${TARGET_HOST}" = win ]; then
