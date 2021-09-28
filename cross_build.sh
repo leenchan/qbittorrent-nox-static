@@ -111,7 +111,7 @@ _init() {
 }
 
 _download_file() {
-	aria2c -c -x 16 -d "${DL_DIR}" -o "$2" "$1" || exit 1
+	aria2c -m 3 -c -x 16 -d "${DL_DIR}" -o "$2" "$1" || exit 1
 }
 
 _download() {
