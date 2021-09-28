@@ -355,20 +355,17 @@ case "$1" in
 	;;
 "compile" | "c")
 	# _compile "$2"
-export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
-export CROSS_HOST="$CROSS_HOST"
-export OPENSSL_COMPILER="$OPENSSL_COMPILER"
-export QT_DEVICE="$QT_DEVICE"
-export QT_XPLATFORM="$QT_XPLATFORM"
-export QT_VER_PREFIX="${QT_VER_PREFIX:-5}"
-export LIBTORRENT_VERSION="$LIBTORRENT_VERSION"
-export QBITTORRENT_VERSION="$QBITTORRENT_VERSION"
-export PATH="${CROSS_ROOT}/bin:${PATH}"
-export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
-export PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
-SELF_DIR="$(dirname "$(readlink -f "${0}")")"
-DL_DIR="/tmp/download"
-[ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
+	export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
+	export CROSS_HOST="$CROSS_HOST"
+	export OPENSSL_COMPILER="$OPENSSL_COMPILER"
+	export QT_DEVICE="$QT_DEVICE"
+	export QT_XPLATFORM="$QT_XPLATFORM"
+	export QT_VER_PREFIX="${QT_VER_PREFIX:-5}"
+	export LIBTORRENT_VERSION="$LIBTORRENT_VERSION"
+	export QBITTORRENT_VERSION="$QBITTORRENT_VERSION"
+	export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
+	export PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+	[ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
 	export PATH="${CROSS_ROOT}/bin:${PATH}"
 	#### Compile zlib ####
 	cd /usr/src/zlib
@@ -423,7 +420,7 @@ DL_DIR="/tmp/download"
 	find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-mfloat-abi=softfp//g'
 	make -j$(nproc) install
 	cd "${CROSS_ROOT}/bin"
-	ln -sf lrelease "lrelease-qt$(echo "${qt_ver}" | grep -Eo "^[1-9]")"
+	ln -sf lrelease "lrelease-qt$(echo "${QT_VER_PREFIX}" | grep -Eo "^[1-9]")"
 
 	#### Compile libiconv ####
 	cd /usr/src/libiconv/
@@ -483,7 +480,7 @@ DL_DIR="/tmp/download"
 	# echo "qt_ver: ${qt_ver}"
 
 	# archive qbittorrent
-	zip -j9v "${SELF_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox*
+	zip -j9v "${CUR_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox*
 
 	;;
 esac
