@@ -245,7 +245,7 @@ _compile() {
 	# [ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
 	# export PATH="${CROSS_ROOT}/bin:${PATH}"
 
-	export CROSS_ROOT="$CROSS_ROOT"
+	export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
 	export CROSS_HOST="$CROSS_HOST"
 	export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
 	export TARGET_HOST="$TARGET_HOST"
