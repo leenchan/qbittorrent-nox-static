@@ -346,15 +346,7 @@ _compile() {
 	esac
 }
 
-case "$1" in
-"init")
-	_init
-	;;
-"download")
-	_download
-	;;
-"compile" | "c")
-	# _compile "$2"
+compile_test() {
 	export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
 	export CROSS_HOST="$CROSS_HOST"
 	export OPENSSL_COMPILER="$OPENSSL_COMPILER"
@@ -366,6 +358,7 @@ case "$1" in
 	export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
 	export PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 	[ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
+	
 	export PATH="${CROSS_ROOT}/bin:${PATH}"
 	#### Compile zlib ####
 	cd /usr/src/zlib
@@ -481,7 +474,18 @@ case "$1" in
 
 	# archive qbittorrent
 	zip -j9v "${CUR_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox*
+}
 
+case "$1" in
+"init")
+	_init
+	;;
+"download")
+	_download
+	;;
+"compile" | "c")
+	# _compile "$2"
+	compile_test
 	;;
 esac
 
