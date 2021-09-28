@@ -216,11 +216,21 @@ _download() {
 }
 
 _compile() {
-	export CROSS_HOST="${CROSS_HOST}"
-	export CROSS_PREFIX="${CROSS_PREFIX}"
-	export TARGET_HOST="${TARGET_HOST}"
-	export OPENSSL_COMPILER="${OPENSSL_COMPILER}"
-	export QT_DEVICE="${QT_DEVICE}"
+	# export CROSS_HOST="${CROSS_HOST}"
+	# export CROSS_PREFIX="${CROSS_PREFIX}"
+	# export TARGET_HOST="${TARGET_HOST}"
+	# export OPENSSL_COMPILER="${OPENSSL_COMPILER}"
+	# export QT_DEVICE="${QT_DEVICE}"
+	echo "CROSS_ROOT: $CROSS_ROOT"
+	echo "CROSS_HOST: $CROSS_HOST"
+	echo "OPENSSL_COMPILER: $OPENSSL_COMPILER"
+	echo "QT_DEVICE: $QT_DEVICE"
+	echo "QT_XPLATFORM: $QT_XPLATFORM"
+	echo "QT_VER_PREFIX: $QT_VER_PREFIX"
+	echo "LIBTORRENT_VERSION: $LIBTORRENT_VERSION"
+	echo "QBITTORRENT_VERSION: $QBITTORRENT_VERSION"
+	echo "CROSS_PREFIX: $CROSS_PREFIX"
+	echo "PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
 	export PATH="${CROSS_ROOT}/bin:${PATH}"
 	case "$1" in
 	"zlib")
@@ -247,7 +257,7 @@ _compile() {
 		cd /usr/src/boost
 		./bootstrap.sh
 		sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.jam
-		[ -z "$BOOST_VERSION" ] || boost_with_libs=$(echo "${BOOST_VERSION}" | awk -F'.' '{if ($1<=1 && $2<=68) {print "--with-chrono --with-random"}}')
+		[ -z "$BOOST_VERSION" ] || boost_with_libs=$(echo "$BOOST_VERSION" | awk -F'.' '{if ($1<=1 && $2<=68) {print "--with-chrono --with-random"}}')
 		./b2 install --prefix="${CROSS_PREFIX}" --with-system $boost_with_libs toolset=gcc-cross variant=release link=static runtime-link=static
 		;;
 	"qtbase")
@@ -305,13 +315,13 @@ _compile() {
 		if [ "${TARGET_HOST}" = 'win' ]; then
 			find -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 |
 				xargs -0 -r sed -i 's/include\s*<condition_variable>/include "mingw.condition_variable.h"/g;
-														s/include\s*<future>/include "mingw.future.h"/g;
-														s/include\s*<invoke>/include "mingw.invoke.h"/g;
-														s/include\s*<mutex>/include "mingw.mutex.h"/g;
-														s/include\s*<shared_mutex>/include "mingw.shared_mutex.h"/g;
-														s/include\s*<thread>/include "mingw.thread.h"/g'
+                        s/include\s*<future>/include "mingw.future.h"/g;
+                        s/include\s*<invoke>/include "mingw.invoke.h"/g;
+                        s/include\s*<mutex>/include "mingw.mutex.h"/g;
+                        s/include\s*<shared_mutex>/include "mingw.shared_mutex.h"/g;
+                        s/include\s*<thread>/include "mingw.thread.h"/g'
 		fi
-		make -j$(nproc)
+		make -j$(nproc) || exit 1
 		make install
 		unset LIBS CPPFLAGS
 		;;
@@ -321,9 +331,9 @@ _compile() {
 		if [ "${TARGET_HOST}" = 'win' ]; then
 			find \( -name '*.cpp' -o -name '*.h' \) -type f -print0 |
 				xargs -0 -r sed -i 's/Windows\.h/windows.h/g;
-					s/Shellapi\.h/shellapi.h/g;
-					s/Shlobj\.h/shlobj.h/g;
-					s/Ntsecapi\.h/ntsecapi.h/g'
+      s/Shellapi\.h/shellapi.h/g;
+      s/Shlobj\.h/shlobj.h/g;
+      s/Ntsecapi\.h/ntsecapi.h/g'
 			export LIBS="-lmswsock"
 			export CPPFLAGS='-std=c++17 -D_WIN32_WINNT=0x0602'
 		fi
@@ -338,9 +348,14 @@ _compile() {
 		fi
 		# compression
 		[ "$UPX_COMPRESSION" = "true" ] && upx --lzma --best /tmp/qbittorrent-nox
+
 		# check qbittorrent version
 		echo "Checking qBittorrent Version ... (${RUNNER_CHECKER})"
 		"${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
+		# ls -al "${CROSS_ROOT}/bin"
+		# echo "qt_ver: ${qt_ver}"
+
+		# archive qbittorrent
 		zip -j9v "${CUR_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox*
 		;;
 	esac
@@ -495,8 +510,8 @@ case "$1" in
 	_download
 	;;
 "compile" | "c")
-	# _compile "$2"
-	compile_test
+	_compile "$@"
+	# compile_test
 	;;
 esac
 
