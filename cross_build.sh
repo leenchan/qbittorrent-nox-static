@@ -347,19 +347,30 @@ _compile() {
 }
 
 compile_test() {
-	export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
-	export CROSS_HOST="$CROSS_HOST"
-	export OPENSSL_COMPILER="$OPENSSL_COMPILER"
-	export QT_DEVICE="$QT_DEVICE"
-	export QT_XPLATFORM="$QT_XPLATFORM"
-	export QT_VER_PREFIX="${QT_VER_PREFIX:-5}"
-	export LIBTORRENT_VERSION="$LIBTORRENT_VERSION"
-	export QBITTORRENT_VERSION="$QBITTORRENT_VERSION"
-	export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
-	export PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
-	[ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
-	
+	# export CROSS_ROOT="${CROSS_ROOT:-/cross_root}"
+	# export CROSS_HOST="$CROSS_HOST"
+	# export OPENSSL_COMPILER="$OPENSSL_COMPILER"
+	# export QT_DEVICE="$QT_DEVICE"
+	# export QT_XPLATFORM="$QT_XPLATFORM"
+	# export QT_VER_PREFIX="${QT_VER_PREFIX:-5}"
+	# export LIBTORRENT_VERSION="$LIBTORRENT_VERSION"
+	# export QBITTORRENT_VERSION="$QBITTORRENT_VERSION"
+	# export CROSS_PREFIX="${CROSS_ROOT}/${CROSS_HOST}"
+	# export PKG_CONFIG_PATH="${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+	# [ -z "$QBITTORRENT_VERSION" ] && export QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')
+	echo "CROSS_ROOT: $CROSS_ROOT"
+	echo "CROSS_HOST: $CROSS_HOST"
+	echo "OPENSSL_COMPILER: $OPENSSL_COMPILER"
+	echo "QT_DEVICE: $QT_DEVICE"
+	echo "QT_XPLATFORM: $QT_XPLATFORM"
+	echo "QT_VER_PREFIX: $QT_VER_PREFIX"
+	echo "LIBTORRENT_VERSION: $LIBTORRENT_VERSION"
+	echo "QBITTORRENT_VERSION: $QBITTORRENT_VERSION"
+	echo "CROSS_PREFIX: $CROSS_PREFIX"
+	echo "PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
 	export PATH="${CROSS_ROOT}/bin:${PATH}"
+
+	exit 1
 	#### Compile zlib ####
 	cd /usr/src/zlib
 	if [ "${TARGET_HOST}" = win ]; then
