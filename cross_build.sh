@@ -251,13 +251,14 @@ _compile() {
 	export TARGET_HOST="$TARGET_HOST"
 	export PATH="${CROSS_ROOT}/bin:${PATH}"
 	export QT_VER_PREFIX="$QT_VER_PREFIX"
-	echo "CROSS_ROOT: $CROSS_ROOT"
-	echo "CROSS_HOST: $CROSS_HOST"
-	echo "CROSS_PREFIX: $CROSS_PREFIX"
-	echo "TARGET_HOST: $TARGET_HOST"
-	echo "PATH: $PATH"
-	echo "QT_VER_PREFIX: $QT_VER_PREFIX"
-	exit 1
+	export OPENSSL_COMPILER="$OPENSSL_COMPILER"
+	# echo "CROSS_ROOT: $CROSS_ROOT"
+	# echo "CROSS_HOST: $CROSS_HOST"
+	# echo "CROSS_PREFIX: $CROSS_PREFIX"
+	# echo "TARGET_HOST: $TARGET_HOST"
+	# echo "PATH: $PATH"
+	# echo "QT_VER_PREFIX: $QT_VER_PREFIX"
+	# exit 1
 	case "$1" in
 	"zlib")
 		#### Compile zlib ####
