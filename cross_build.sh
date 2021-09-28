@@ -510,6 +510,7 @@ case "$1" in
 	_download
 	;;
 "compile" | "c")
+	shift
 	_compile "$@"
 	# compile_test
 	;;
