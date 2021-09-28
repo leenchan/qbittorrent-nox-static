@@ -5,47 +5,6 @@ CROSS_ROOT="/cross_root"
 DL_DIR="/tmp/download"
 
 _init() {
-	case "$BUILD_TARGET" in
-	"arm")
-		CROSS_HOST="arm-linux-musleabi"
-		OPENSSL_COMPILER="linux-armv4"
-		QT_DEVICE="linux-arm-generic-g++"
-		;;
-	"aarch64")
-		CROSS_HOST="aarch64-linux-musl"
-		OPENSSL_COMPILER="linux-aarch64"
-		QT_DEVICE="linux-arm-generic-g++"
-		;;
-	"mips")
-		CROSS_HOST="mips-linux-musln32sf"
-		OPENSSL_COMPILER="linux-mips32"
-		QT_DEVICE="linux-generic-g++"
-		;;
-	"mipsel")
-		CROSS_HOST="mipsel-linux-musln32sf"
-		OPENSSL_COMPILER="linux-mips32"
-		QT_DEVICE="linux-generic-g++"
-		;;
-	"mips64")
-		CROSS_HOST="mips64-linux-musl"
-		OPENSSL_COMPILER="linux64-mips64"
-		QT_DEVICE="linux-generic-g++"
-		;;
-	"x86_64")
-		CROSS_HOST="x86_64-linux-musl"
-		OPENSSL_COMPILER="linux-x86_64"
-		QT_DEVICE="linux-generic-g++"
-		;;
-	"win32")
-		CROSS_HOST="x86_64-w64-mingw32"
-		OPENSSL_COMPILER="mingw64"
-		QT_XPLATFORM="win32-g++"
-		;;
-	*)
-		echo "[ERR] Not support $1"
-		exit 1
-		;;
-	esac
 	TARGET_ARCH="${CROSS_HOST%%-*}"
 	TARGET_HOST="${CROSS_HOST#*-}"
 	case "${TARGET_HOST}" in
@@ -221,7 +180,7 @@ _compile() {
 	export TARGET_HOST="${TARGET_HOST}"
 	export OPENSSL_COMPILER="${OPENSSL_COMPILER}"
 	export QT_DEVICE="${QT_DEVICE}"
-	export PATH="${CROSS_ROOT}/bin:${PATH}" 
+	export PATH="${CROSS_ROOT}/bin:${PATH}"
 	case "$1" in
 	"zlib")
 		#### Compile zlib ####
@@ -354,7 +313,122 @@ case "$1" in
 	_download
 	;;
 "compile" | "c")
-	_compile "$2"
+	# _compile "$2"
+#### Compile zlib ####
+cd /usr/src/zlib
+if [ "${TARGET_HOST}" = win ]; then
+ make -f win32/Makefile.gcc BINARY_PATH="${CROSS_PREFIX}/bin" INCLUDE_PATH="${CROSS_PREFIX}/include" LIBRARY_PATH="${CROSS_PREFIX}/lib" SHARED_MODE=0 PREFIX="${CROSS_HOST}-" -j$(nproc) install
+else
+ CHOST="${CROSS_HOST}" ./configure --prefix="${CROSS_PREFIX}" --static
+ make -j$(nproc)
+ make install
+fi
+
+#### Compile openssl ####
+cd /usr/src/openssl
+./Configure -static --cross-compile-prefix="${CROSS_HOST}-" --prefix="${CROSS_PREFIX}" "${OPENSSL_COMPILER}"
+make depend
+make -j$(nproc)
+make install_sw
+
+#### Compile boost ####
+cd /usr/src/boost
+./bootstrap.sh
+sed -i "s/using gcc.*/using gcc : cross : ${CROSS_HOST}-g++ ;/" project-config.jam
+[ -z "$BOOST_VERSION" ] || boost_with_libs=$(echo "$BOOST_VERSION" | awk -F'.' '{if ($1<=1 && $2<=68) {print "--with-chrono --with-random"}}')
+./b2 install --prefix="${CROSS_PREFIX}" --with-system $boost_with_libs toolset=gcc-cross variant=release link=static runtime-link=static
+
+#### Compile qt ####
+cd /usr/src/qtbase
+# Remove some options no support by this toolchain
+find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fno-fat-lto-objects//g'
+find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fuse-linker-plugin//g'
+find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-mfloat-abi=softfp//g'
+if [ "${TARGET_HOST}" = 'win' ]; then
+ export OPENSSL_LIBS="-lssl -lcrypto -lcrypt32 -lws2_32"
+ # musl.cc x86_64-w64-mingw32 toolchain not supports thread local
+ sed -i '/define\s*Q_COMPILER_THREAD_LOCAL/d' src/corelib/global/qcompilerdetection.h
+fi
+./configure --prefix=/opt/qt/ -optimize-size -silent --openssl-linked \
+ -static -opensource -confirm-license -release -c++std c++17 -no-opengl \
+ -no-dbus -no-widgets -no-gui -no-compile-examples -ltcg -make libs -no-pch \
+ -nomake tests -nomake examples -no-xcb -no-feature-testlib \
+ -hostprefix "${CROSS_ROOT}" ${QT_XPLATFORM:+-xplatform "${QT_XPLATFORM}"} \
+ ${QT_DEVICE:+-device "${QT_DEVICE}"} -device-option CROSS_COMPILE="${CROSS_HOST}-" \
+ -sysroot "${CROSS_PREFIX}"
+make -j$(nproc)
+make install
+cd /usr/src/qttools
+qmake -set prefix "${CROSS_ROOT}"
+qmake
+# Remove some options no support by this toolchain
+find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fno-fat-lto-objects//g'
+find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-fuse-linker-plugin//g'
+find -name '*.conf' -print0 | xargs -0 -r sed -i 's/-mfloat-abi=softfp//g'
+make -j$(nproc) install
+cd "${CROSS_ROOT}/bin"
+ln -sf lrelease "lrelease-qt$(echo "${qt_ver}" | grep -Eo "^[1-9]")"
+
+#### Compile libiconv ####
+cd /usr/src/libiconv/
+./configure CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules
+make -j$(nproc)
+make install
+
+#### Compile libtorrent ####
+cd /usr/src/libtorrent
+if [ "${TARGET_HOST}" = 'win' ]; then
+ export LIBS="-lcrypt32 -lws2_32"
+ # musl.cc x86_64-w64-mingw32 toolchain not supports thread local
+ export CPPFLAGS='-D_WIN32_WINNT=0x0602 -DBOOST_NO_CXX11_THREAD_LOCAL'
+fi
+./bootstrap.sh CXXFLAGS="-std=c++17" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared --enable-silent-rules --with-boost="${CROSS_PREFIX}" --with-libiconv
+# fix x86_64-w64-mingw32 build
+if [ "${TARGET_HOST}" = 'win' ]; then
+ find -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 |
+  xargs -0 -r sed -i 's/include\s*<condition_variable>/include "mingw.condition_variable.h"/g;
+                        s/include\s*<future>/include "mingw.future.h"/g;
+                        s/include\s*<invoke>/include "mingw.invoke.h"/g;
+                        s/include\s*<mutex>/include "mingw.mutex.h"/g;
+                        s/include\s*<shared_mutex>/include "mingw.shared_mutex.h"/g;
+                        s/include\s*<thread>/include "mingw.thread.h"/g'
+fi
+make -j$(nproc) || exit 1
+make install
+unset LIBS CPPFLAGS
+
+#### Compile qbittorrent ####
+cd /usr/src/qbittorrent
+if [ "${TARGET_HOST}" = 'win' ]; then
+ find \( -name '*.cpp' -o -name '*.h' \) -type f -print0 |
+  xargs -0 -r sed -i 's/Windows\.h/windows.h/g;
+      s/Shellapi\.h/shellapi.h/g;
+      s/Shlobj\.h/shlobj.h/g;
+      s/Ntsecapi\.h/ntsecapi.h/g'
+ export LIBS="-lmswsock"
+ export CPPFLAGS='-std=c++17 -D_WIN32_WINNT=0x0602'
+fi
+LIBS="${LIBS} -liconv" ./configure --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --disable-gui --with-boost="${CROSS_PREFIX}" CXXFLAGS="-std=c++17 ${CPPFLAGS}" LDFLAGS='-s -static --static'
+make -j$(nproc)
+make install
+unset LIBS CPPFLAGS
+if [ "${TARGET_HOST}" = 'win' ]; then
+ cp -fv "src/release/qbittorrent-nox.exe" /tmp/
+else
+ cp -fv "${CROSS_PREFIX}/bin/qbittorrent-nox" /tmp/
+fi
+# compression
+[ "$UPX_COMPRESSION" = "true" ] && upx --lzma --best /tmp/qbittorrent-nox
+
+# check qbittorrent version
+echo "Checking qBittorrent Version ... (${RUNNER_CHECKER})"
+"${RUNNER_CHECKER}" /tmp/qbittorrent-nox* --version 2>/dev/null
+# ls -al "${CROSS_ROOT}/bin"
+# echo "qt_ver: ${qt_ver}"
+
+# archive qbittorrent
+zip -j9v "${SELF_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox*
+
 	;;
 esac
 
