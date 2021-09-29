@@ -3,6 +3,7 @@
 CUR_DIR="$(dirname "$(readlink -f "${0}")")"
 CROSS_ROOT="/cross_root"
 DL_DIR="/tmp/download"
+TARGET_HOST="linux"
 
 case "$BUILD_TARGET" in
 "arm")
@@ -39,6 +40,7 @@ case "$BUILD_TARGET" in
 	CROSS_HOST="x86_64-w64-mingw32"
 	OPENSSL_COMPILER="mingw64"
 	QT_XPLATFORM="win32-g++"
+	TARGET_HOST="win"
 	;;
 *)
 	exit 1
@@ -46,20 +48,6 @@ case "$BUILD_TARGET" in
 esac
 
 _init() {
-	TARGET_ARCH="${CROSS_HOST%%-*}"
-	TARGET_HOST="${CROSS_HOST#*-}"
-	case "${TARGET_HOST}" in
-	*"mingw"*)
-		TARGET_HOST="win"
-		APK_RUNNER="wine"
-		RUNNER_CHECKER="wine64"
-		;;
-	*)
-		TARGET_HOST="linux"
-		APK_RUNNER="qemu-${TARGET_ARCH}"
-		RUNNER_CHECKER="qemu-${TARGET_ARCH}"
-		;;
-	esac
 	cat <<-EOF >>$GITHUB_ENV
 		CROSS_HOST=$CROSS_HOST
 		OPENSSL_COMPILER=$OPENSSL_COMPILER
@@ -67,10 +55,7 @@ _init() {
 		QT_XPLATFORM=$QT_XPLATFORM
 		QT_VER_PREFIX=${QT_VER_PREFIX:-5}
 		TARGET_HOST=$TARGET_HOST
-		APK_RUNNER=$APK_RUNNER
-		RUNNER_CHECKER=$RUNNER_CHECKER
-		CROSS_PREFIX=${CROSS_ROOT}/${CROSS_HOST}
-		PKG_CONFIG_PATH=${CROSS_PREFIX}/opt/qt/lib/pkgconfig:${CROSS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}
+		CROSS_PREFIX=$CROSS_ROOT/$CROSS_HOST
 	EOF
 	[ -z "$QBITTORRENT_VERSION" ] && echo "QBITTORRENT_VERSION=$(curl -skL https://github.com/c0re100/qBittorrent-Enhanced-Edition/releases/latest | grep -Eo 'tag/release-[0-9.]+' | head -n1 | awk -F'-' '{print $2}')" >>$GITHUB_ENV
 	LIBTORRENT_VERSION_MAX=$(echo "${QBITTORRENT_VERSION}" | awk -F'.' '{if ($1<=4 && $2 <=1) {print "libtorrent-1_1_14"}}')
@@ -105,12 +90,11 @@ _init() {
 		xz \
 		curl \
 		upx \
-		aria2 \
-		$APK_RUNNER
+		aria2
 }
 
 _download_file() {
-	aria2c -m 3 -c -x 16 -d "${DL_DIR}" -o "$2" "$1" || {
+	aria2c -m 3 -c -x 16 -d "${DL_DIR}" -o "$2" "$1" || wget -O "${DL_DIR}/${2}" "$1" || {
 		echo "[ERR] Failed to download: $1"
 		exit 1
 	}
@@ -226,7 +210,7 @@ _compile() {
 	"zlib")
 		#### Compile zlib ####
 		cd /usr/src/zlib
-		if [ "${TARGET_HOST}" = win ]; then
+		if [ "${TARGET_HOST}" = 'win' ]; then
 			make -f win32/Makefile.gcc BINARY_PATH="${CROSS_PREFIX}/bin" INCLUDE_PATH="${CROSS_PREFIX}/include" LIBRARY_PATH="${CROSS_PREFIX}/lib" SHARED_MODE=0 PREFIX="${CROSS_HOST}-" -j$(nproc) install || exit 1
 		else
 			CHOST="${CROSS_HOST}" ./configure --prefix="${CROSS_PREFIX}" --static || exit 1
@@ -350,12 +334,15 @@ _compile() {
 
 _check() {
 	# check qbittorrent version
-	echo "Checking qBittorrent Version ... (${RUNNER_CHECKER})"
+	echo "Checking qBittorrent Version ... (${CROSS_HOST})"
 	if [ "${TARGET_HOST}" = 'win' ]; then
+		apk add wine
 		export WINEPREFIX=/tmp/
-		"${RUNNER_CHECKER}" /tmp/qbittorrent-nox.exe --version 2>/dev/null || exit 1
+		wine64 /tmp/qbittorrent-nox.exe --version 2>/dev/null || exit 1
 	else
-		"${RUNNER_CHECKER}" /tmp/qbittorrent-nox --version 2>/dev/null || exit 1
+		TARGET_ARCH="${CROSS_HOST%%-*}"
+		apk add qemu-${TARGET_ARCH}
+		qemu-${TARGET_ARCH} /tmp/qbittorrent-nox --version 2>/dev/null || exit 1
 	fi
 }
 
