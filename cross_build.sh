@@ -309,7 +309,8 @@ _compile() {
       s/Shlobj\.h/shlobj.h/g;
       s/Ntsecapi\.h/ntsecapi.h/g'
 			export LIBS="-lmswsock"
-			export CPPFLAGS='-std=c++17 -D_WIN32_WINNT=0x0602 -Wno-deprecated-declarations'
+			export CPPFLAGS='-std=c++17 -D_WIN32_WINNT=0x0602'
+			# -Wno-deprecated-declarations
 		fi
 		LIBS="${LIBS} -liconv" ./configure --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --disable-gui --with-boost="${CROSS_PREFIX}" CXXFLAGS="-std=c++17 ${CPPFLAGS}" LDFLAGS='-s -static --static' || exit 1
 		make -j$(nproc) || exit 1
@@ -320,14 +321,6 @@ _compile() {
 		else
 			cp -fv "${CROSS_PREFIX}/bin/qbittorrent-nox" /tmp/
 		fi
-		# compression
-		[ "$UPX_COMPRESSION" = "true" ] && {
-			if [ "${TARGET_HOST}" = 'win' ]; then
-				upx --lzma --best -o /tmp/qbittorrent-nox_upx.exe /tmp/qbittorrent-nox.exe
-			else
-				upx --lzma --best -o /tmp/qbittorrent-nox_upx /tmp/qbittorrent-nox
-			fi
-		}
 		;;
 	esac
 }
@@ -343,6 +336,14 @@ _check() {
 		TARGET_ARCH="${CROSS_HOST%%-*}"
 		apk add qemu-${TARGET_ARCH}
 		qemu-${TARGET_ARCH} /tmp/qbittorrent-nox --version 2>/dev/null || exit 1
+	fi
+}
+
+_compress() {
+	if [ "${TARGET_HOST}" = 'win' ]; then
+		upx --lzma --best -o /tmp/qbittorrent-nox_upx.exe /tmp/qbittorrent-nox.exe
+	else
+		upx --lzma --best -o /tmp/qbittorrent-nox_upx /tmp/qbittorrent-nox
 	fi
 }
 
@@ -366,6 +367,9 @@ case "$1" in
 	;;
 "check")
 	_check
+	;;
+"compress")
+	_compress
 	;;
 "archive")
 	_archive

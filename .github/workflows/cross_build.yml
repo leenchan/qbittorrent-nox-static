@@ -28,8 +28,8 @@ jobs:
     env:
       QBITTORRENT_VERSION: "4.1.9.17"
       QBITTORRENT_ENHANCED: true
-      UPX_COMPRESSION: false
       CHECK_BINARY: true
+      UPX_COMPRESSION: true
       BUILD_TARGET: "${{matrix.build_target}}"
     steps:
       - name: Checkout
@@ -57,6 +57,9 @@ jobs:
       - name: Check
         if: ${{ env.CHECK_BINARY == 'true' }}
         run: sh cross_build.sh check
+      - name: Compress with UPX
+        if: ${{ env.UPX_COMPRESSION == 'true' }}
+        run: sh cross_build.sh compress
       - name: Archive
         run: sh cross_build.sh archive
       - uses: actions/upload-artifact@v2
