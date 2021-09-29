@@ -22,25 +22,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # arm, aarch64, mips, mipsel, mips64, x86_64, win32
-        build_target: [arm]
+        # arm, aarch64, mips, mipsel, mips64, x86_64, x86_64_win
+        build_target: [arm, aarch64, mips, mipsel, mips64, x86_64, x86_64_win]
     name: "${{ matrix.build_target }}"
     env:
       QBITTORRENT_VERSION: "4.1.9.17"
       QBITTORRENT_ENHANCED: true
       UPX_COMPRESSION: false
+      CHECK_BINARY: true
       BUILD_TARGET: "${{matrix.build_target}}"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      # - name: Compile with old script
-      #   run: sh cross_build_old.sh
       - name: Init
         run: sh cross_build.sh init
       - name: Download
         run: sh cross_build.sh download
-      # - name: Download
-      #   run: sh cross_build.sh compile
       - name: Compile zlib (1/8)
         run: sh cross_build.sh compile zlib
       - name: Compile openssl (2/8)
@@ -57,24 +54,29 @@ jobs:
         run: sh cross_build.sh compile libtorrent
       - name: Compile qbittorrent (8/8)
         run: sh cross_build.sh compile qbittorrent
-      # - uses: actions/upload-artifact@v2
-      #   with:
-      #     name: qbittorrent-nox_${{ matrix.build_target }}_static
-      #     path: |
-      #       /tmp/qbittorrent-nox*
-      # - name: Upload Github Assets (Enhanced Edition)
-      #   if: ${{ env.QBITTORRENT_ENHANCED == 'true' }}
-      #   uses: svenstaro/upload-release-action@v2
-      #   with:
-      #     repo_token: ${{ secrets.GITHUB_TOKEN }}
-      #     file: "qbittorrent-nox_${{ matrix.build_target }}_static.zip"
-      #     tag: v${{ env.QBITTORRENT_VERSION }}-enhanced
-      #     overwrite: true
-      # - name: Upload Github Assets
-      #   if: ${{ env.QBITTORRENT_ENHANCED != 'true' }}
-      #   uses: svenstaro/upload-release-action@v2
-      #   with:
-      #     repo_token: ${{ secrets.GITHUB_TOKEN }}
-      #     file: "qbittorrent-nox_${{ matrix.build_target }}_static.zip"
-      #     tag: v${{ env.QBITTORRENT_VERSION }}
-      #     overwrite: true
+      - name: Check
+        if: ${{ env.CHECK_BINARY == 'true' }}
+        run: sh cross_build.sh check
+      - name: Archive
+        run: sh cross_build.sh archive
+      - uses: actions/upload-artifact@v2
+        with:
+          name: qbittorrent-nox_${{ matrix.build_target }}_static
+          path: |
+            /tmp/qbittorrent-nox*
+      - name: Upload Github Assets (Enhanced Edition)
+        if: ${{ env.QBITTORRENT_ENHANCED == 'true' }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "qbittorrent-nox_${{ matrix.build_target }}_static.zip"
+          tag: v${{ env.QBITTORRENT_VERSION }}-enhanced
+          overwrite: true
+      - name: Upload Github Assets
+        if: ${{ env.QBITTORRENT_ENHANCED != 'true' }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "qbittorrent-nox_${{ matrix.build_target }}_static.zip"
+          tag: v${{ env.QBITTORRENT_VERSION }}
+          overwrite: true
