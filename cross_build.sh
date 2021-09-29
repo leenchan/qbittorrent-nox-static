@@ -309,7 +309,7 @@ _compile() {
       s/Shlobj\.h/shlobj.h/g;
       s/Ntsecapi\.h/ntsecapi.h/g'
 			export LIBS="-lmswsock"
-			export CPPFLAGS='-std=c++17 -D_WIN32_WINNT=0x0602'
+			export CPPFLAGS='-std=c++17 -D_WIN32_WINNT=0x0602 -Wno-deprecated-declarations'
 		fi
 		LIBS="${LIBS} -liconv" ./configure --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --disable-gui --with-boost="${CROSS_PREFIX}" CXXFLAGS="-std=c++17 ${CPPFLAGS}" LDFLAGS='-s -static --static' || exit 1
 		make -j$(nproc) || exit 1
@@ -349,7 +349,8 @@ _check() {
 _archive() {
 	# archive qbittorrent
 	ls /tmp | grep -q "qbittorrent-nox" || exit 1
-	zip -j9v "${CUR_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox*
+	zip -j9v "${CUR_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip" /tmp/qbittorrent-nox* || exit 1
+	echo "${CUR_DIR}/qbittorrent-nox_${BUILD_TARGET}_static.zip"
 }
 
 case "$1" in
