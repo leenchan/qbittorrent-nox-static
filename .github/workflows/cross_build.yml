@@ -26,7 +26,8 @@ jobs:
         build_target: [arm, aarch64, mips, mipsel, mips64, x86_64, x86_64_win]
     name: "${{ matrix.build_target }}"
     env:
-      QBITTORRENT_VERSION: "4.1.9.17"
+#       QBITTORRENT_VERSION: "4.1.9.17"
+      QBITTORRENT_VERSION: "4.3.8.10"
       QBITTORRENT_ENHANCED: true
       CHECK_BINARY: true
       UPX_COMPRESSION: true
