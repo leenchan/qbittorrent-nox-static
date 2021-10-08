@@ -344,7 +344,7 @@ _check() {
 
 _compress() {
 	if [ "${TARGET_HOST}" = 'win' ]; then
-		upx --lzma --best -o /tmp/qbittorrent-nox_upx.exe /tmp/qbittorrent-nox.exe
+		upx --force --lzma --best -o /tmp/qbittorrent-nox_upx.exe /tmp/qbittorrent-nox.exe
 	else
 		upx --lzma --best -o /tmp/qbittorrent-nox_upx /tmp/qbittorrent-nox
 	fi
