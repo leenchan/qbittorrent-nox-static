@@ -2,6 +2,10 @@ name: Cross Build qBittorrent Static
 
 on:
   workflow_dispatch:
+    inputs:
+      BUILD_TARGET:
+        description: 'Arch Type (arm, aarch64, mips, mipsel, mips64, x86_64, x86_64_win)'
+        default: ''
 
 # on:
 #   push:
@@ -32,6 +36,7 @@ jobs:
       CHECK_BINARY: true
       UPX_COMPRESSION: true
       BUILD_TARGET: "${{matrix.build_target}}"
+      BUILD_TARGET_INCLUDE: "${{github.event.inputs.BUILD_TARGET}}"
     steps:
       - name: Checkout
         uses: actions/checkout@v2

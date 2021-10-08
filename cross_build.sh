@@ -48,6 +48,9 @@ case "$BUILD_TARGET" in
 esac
 
 _init() {
+	[ -z "$BUILD_TARGET_INCLUDE" ] || {
+		echo "$BUILD_TARGET_INCLUDE" | tr -d ' ' | tr ',' '\n' | grep -q "^${BUILD_TARGET}$" || exit 1
+	}
 	cat <<-EOF >>$GITHUB_ENV
 		CROSS_HOST=$CROSS_HOST
 		OPENSSL_COMPILER=$OPENSSL_COMPILER
